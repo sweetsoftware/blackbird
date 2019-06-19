@@ -27,15 +27,15 @@ Common usage:
 # Only port scan (requires ping sweep first to "outputdir")
 ./blackbird.py -t 192.168.254.148/24 -o outputdir --scan
 
-# only enum (requires portscan first to "outputdir")
+# Only enum (requires portscan first to "outputdir")
 ./blackbird.py -t targets.txt -o outputdir --enum
 
-# only bruteforce (requires portscan first to "outputdir")
+# Only bruteforce (requires portscan first to "outputdir")
 ./blackbird.py -t 192.168.254.148/24 -o outputdir --brute
 
 ```
 
-## Help
+## Help
 
 ```
 root@kali:~/Blackbird# ./blackbird.py  --help
