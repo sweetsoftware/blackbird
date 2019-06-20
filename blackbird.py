@@ -47,7 +47,7 @@ __________.__                 __   ___.   .__           .___
 (Artwork by Carl Pilcher)
     """)
     parser = argparse.ArgumentParser(description="Network reconnaissance and enumeration tool.")
-    parser.add_argument('-t', '--target', help='Target (nmap format) or file with targets (one per line)', required=True)
+    parser.add_argument('-t', '--target', help='Target (nmap format) or file with targets (one per line)')
     parser.add_argument('-o', '--output', help='Output directory (created if does not exist)', required=True)
     parser.add_argument('--sweep', help='Ping sweep targets', action='store_true')
     parser.add_argument('--no-sweep', help='Treat all hosts as alive (no ping sweep)', action='store_true')
@@ -90,6 +90,14 @@ __________.__                 __   ___.   .__           .___
         else:
             print('No such file : %s' % args.userpasslist)
             exit(1)
+    
+    # Check options
+    if not args.target and (args.sweep or args.no_sweep):
+        utils.log('Targets (-t) is needed for sweep scan.', 'info')
+        exit(1)
+    if args.target and not (args.sweep or args.no_sweep):
+        utils.log('Targets options (-t) is only processed when a new --sweep or --no-sweep scan is performed. Otherwise, the already existing sweep.xml file in the output dir is used to list targets.', 'info')
+        exit(1)
 
     # Output directory handling
     if not os.path.exists(config.OUTPUT_PATH):
@@ -97,12 +105,13 @@ __________.__                 __   ___.   .__           .___
         utils.log('Created output directory %s.' % config.OUTPUT_PATH, 'info')
 
     # Load targets
-    targets = args.target
-    if os.path.exists(targets) and os.path.isfile(targets):
-        targets_file = targets
-        with open(targets_file, 'r') as f:
-            targets = ' '.join(f.readlines()).replace('\n', '')
-    utils.log("Parsed targets : " + targets, 'info')
+    if args.target:
+        targets = args.target
+        if os.path.exists(targets) and os.path.isfile(targets):
+            targets_file = targets
+            with open(targets_file, 'r') as f:
+                targets = ' '.join(f.readlines()).replace('\n', '')
+        utils.log("Parsed targets : " + targets, 'info')
 
     output_path = config.OUTPUT_PATH
     # Do sweep scan or import all targets

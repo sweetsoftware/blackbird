@@ -1,5 +1,6 @@
 import multiprocessing
 import os
+import shutil
 
 from blackbird import utils
 from blackbird import config
@@ -9,16 +10,30 @@ def _port_scan(target, output_dir):
     output_path = os.path.join(output_dir, target)
     if not os.path.exists(output_path):
         os.mkdir(output_path)
-    cmd = 'nmap -v -sV -sT -Pn -T4 -n --open -oA %s %s' % (output_path + '/ports-tcp', target)
+    cmd = 'nmap -v -sV -sT -Pn -n --open -oA %s %s' % (output_path + '/ports-tcp', target)
     if not config.FAST_SCAN:
-        cmd += " -p-"
+        cmd += " -p- -T4"
+    else:
+        cmd += " -T5"
     utils.run_cmd(cmd)
     cmd = 'nmap -v -sV --defeat-icmp-ratelimit -Pn -sU -T4 -n --open -oA %s %s' % (output_path + '/ports-udp', target)
     if not config.FAST_SCAN:
-        cmd += " -F"
+        cmd += " --top-ports 100"
     else:
         cmd += " --top-ports 20"
     utils.run_cmd(cmd)
+    tcp_scan = os.path.join(output_path, "ports-tcp.xml")
+    udp_scan = os.path.join(output_path, "ports-udp.xml")
+    tcp_result = utils.parse_nmap_xml(tcp_scan)
+    udp_result = utils.parse_nmap_xml(udp_scan)
+    if not tcp_result and not udp_result:
+        utils.log("No open ports on %s, deleting directory..." % target, "info")
+        shutil.rmtree(output_path)
+    else:
+        if not tcp_result:
+            os.remove(tcp_scan)
+        if not udp_result:
+            os.remove(udp_scan)
 
 
 def run(output_dir):
