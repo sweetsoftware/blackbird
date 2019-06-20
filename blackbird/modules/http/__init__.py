@@ -53,7 +53,7 @@ class ModuleInstance(Module):
         utils.run_cmd(cmd)
 
         cmd = "chromium --headless --no-sandbox --screenshot=%s %s" % (self.get_output_path('screenshot.png'), self.url)
-        utils.run_cmd(cmd)
+        #utils.run_cmd(cmd)
 
 
     def do_bruteforce(self, outfile, user_list=None, pass_list=None, userpass_list=None):

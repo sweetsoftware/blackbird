@@ -25,13 +25,13 @@ Common usage:
 ./blackbird.py -t targets.txt -o outputdir --no-sweep
 
 # Only port scan (requires ping sweep first to "outputdir")
-./blackbird.py -t 192.168.254.148/24 -o outputdir --scan
+./blackbird.py -o outputdir --scan
 
 # Only enum (requires portscan first to "outputdir")
-./blackbird.py -t targets.txt -o outputdir --enum
+./blackbird.py -o outputdir --enum
 
 # Only bruteforce (requires portscan first to "outputdir")
-./blackbird.py -t 192.168.254.148/24 -o outputdir --brute
+./blackbird.py -o outputdir --brute
 
 ```
 
