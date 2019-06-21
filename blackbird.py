@@ -101,7 +101,7 @@ __________.__                 __   ___.   .__           .___
 
     # Output directory handling
     if not os.path.exists(config.OUTPUT_PATH):
-        os.mkdir(config.OUTPUT_PATH)
+        os.makedirs(config.OUTPUT_PATH)
         utils.log('Created output directory %s.' % config.OUTPUT_PATH, 'info')
 
     # Load targets

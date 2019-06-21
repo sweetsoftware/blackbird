@@ -1,6 +1,7 @@
 import multiprocessing
 import os
 import shutil
+import glob
 
 from blackbird import utils
 from blackbird import config
@@ -51,3 +52,5 @@ def run(output_dir):
     pool.starmap(_port_scan, jobs)
     pool.close()
     pool.join()
+    scan_files = glob.glob(os.path.join(output_dir, '*', '*.xml'))
+    utils.merge_nmap_files(scan_files, os.path.join(output_dir, 'nmap_summary.xml'))
