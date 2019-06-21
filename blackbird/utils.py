@@ -51,6 +51,25 @@ def parse_nmap_xml(filename):
     return host_info
 
 
+def merge_nmap_files(file_list, output_file):
+    log("Merging %s ... " % file_list)
+    output = open(output_file, 'w')
+    XML_HEADER = ("""<?xml version="1.0" encoding="UTF-8"?>\n"""
+    """<!DOCTYPE nmaprun>\n"""
+    """<?xml-stylesheet href="file:///usr/bin/../share/nmap/nmap.xsl" type="text/xsl"?>\n"""
+    """<nmaprun scanner="nmap" args="Blackbird Summary" start="0" """
+    """startstr="None" version="7.70" xmloutputversion="1.04">\n"""
+    )
+    output.write(XML_HEADER)
+    for file in file_list:
+        xml_file = open(file, 'r')
+        soup = BeautifulSoup(xml_file, 'lxml')
+        for host in soup.find_all('host'):
+            output.write(str(host))
+    output.write('\n</nmaprun>\n')
+    output.close()
+
+
 def get_host_list(nmap_xml):
     nmap_results = parse_nmap_xml(nmap_xml)
     return nmap_results.keys()

@@ -21,8 +21,9 @@ class ModuleInstance(Module):
         if service == 'http':
             if nmap_results['tunnel'] == 'ssl':
                 tls = True
-        elif service == 'https':
+        if service == 'https':
             tls = True
+        return tls
 
 
     def get_url(self, target, port, tls):
@@ -52,8 +53,8 @@ class ModuleInstance(Module):
         cmd = "dirb %s %s -l -r -o %s" % (self.url, self.get_ressource_path('urls.txt'), self.get_output_path('dirb.txt'))
         utils.run_cmd(cmd)
 
-        cmd = "chromium --headless --no-sandbox --screenshot=%s %s" % (self.get_output_path('screenshot.png'), self.url)
-        #utils.run_cmd(cmd)
+        cmd = "xvfb-run -a cutycapt --url='%s' --out='%s'" % (self.url, self.get_output_path('screenshot.png'))
+        utils.run_cmd(cmd)
 
 
     def do_bruteforce(self, outfile, user_list=None, pass_list=None, userpass_list=None):
@@ -66,7 +67,7 @@ class ModuleInstance(Module):
 
     def brute(self):
         # Detect HTTP Basic authentication
-        if 'WWW-Authenticate: Basic' not in subprocess.check_output('curl -LI %s' % self.url, shell=True).decode('utf8'):
+        if 'WWW-Authenticate: Basic' not in subprocess.check_output('curl -kLI %s' % self.url, shell=True).decode('utf8'):
             return
         utils.log('Starting HTTP bruteforce against %s' % (self.url), 'info')
 

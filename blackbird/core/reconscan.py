@@ -13,7 +13,7 @@ def _recon_scan(target, output_dir):
     output_path = os.path.join(output_dir, target)
     nmap_xml_file = os.path.join(output_path, "ports-tcp.xml")
     if not os.path.exists(nmap_xml_file):
-        utils.log("Could not find scan file %s ... have you performed a --scan operation first ?" % nmap_xml_file, 'info')
+        utils.log("No TCP scan file : %s Either no port is open or you didn't perform port scan (--scan)" % nmap_xml_file, 'info')
         return
     nmap_results = utils.parse_nmap_xml(nmap_xml_file)
     if not nmap_results:
