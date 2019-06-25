@@ -61,6 +61,7 @@ __________.__                 __   ___.   .__           .___
     parser.add_argument('--brute', action='store_true', help='Perform login bruteforce')
     parser.add_argument('--nmap-import', help='Import nmap XML files (comma separated)')
     parser.add_argument('-M', '--modules', help='Run only selected modules (for --enum and --brute operations)')
+    parser.add_argument('--only-custom-brute', action='store_true', help='--brute will run only custom wordlists on bruteforce attempts')
     args = parser.parse_args()
 
     # Scan configuration
@@ -72,6 +73,7 @@ __________.__                 __   ___.   .__           .___
     config.OUTPUT_PATH = args.output
     config.SWEEP = args.sweep
     config.MODULES = utils.get_module_list()
+    config.ONLY_CUSTOM_BRUTE = args.only_custom_brute
 
     if args.modules:
         config.MODULES=args.modules.split(',')
@@ -107,7 +109,10 @@ __________.__                 __   ___.   .__           .___
         else:
             utils.log('No such file : %s' % args.userpasslist)
             exit(1)
-    
+    if config.ONLY_CUSTOM_BRUTE and not (args.userlist or args.userpasslist):
+        utils.log('No custom wordlist given for bruteforce.', 'info')
+        exit(1)
+
     # Check options
     if not args.target and (args.sweep or args.no_sweep):
         utils.log('Targets (-t) is needed for sweep scan.', 'info')
