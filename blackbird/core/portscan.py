@@ -45,7 +45,7 @@ def run(output_dir):
         scan_p = (target, output_dir)
         jobs.append(scan_p)
 
-    pool = multiprocessing.Pool(10)
+    pool = multiprocessing.Pool(50)
     pool.starmap(_port_scan, jobs)
     pool.close()
     pool.join()
