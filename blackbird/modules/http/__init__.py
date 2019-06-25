@@ -52,20 +52,20 @@ class ModuleInstance(Module):
         # Fingerprint web technologies
         cmd = "whatweb --user-agent '%s' --color=never --log-brief=%s %s" % \
               (self.user_agent, self.get_output_path('whatweb.txt'), self.url)
-        utils.run_cmd(cmd.split(), timeout=20, shell=False)
+        utils.run_cmd(cmd, timeout=20)
 
         # Screenshot web page
         cmd = "chromium --ignore-certificate-errors  --headless --no-sandbox --window-size=1920,1080 --screenshot='%s' '%s'" % \
-              (self.get_output_path("screenshot.png"), self.url).split(" ")
-        utils.run_cmd(cmd, timeout=10, shell=False)
+              (self.get_output_path("screenshot.png"), self.url)
+        utils.run_cmd(cmd, timeout=10)
 
 
     def do_bruteforce(self, outfile, user_list=None, pass_list=None, userpass_list=None):
         if user_list and pass_list:
-            cmd = "hydra -L %s -P %s -I -e nsr -f -s %s %s http-get / |tee %s" % (user_list, pass_list, self.port, self.target, outfile)
+            cmd = "hydra -L %s -P %s -R -e nsr -f -s %s %s http-get / |tee %s" % (user_list, pass_list, self.port, self.target, outfile)
         elif userpass_list:
-            cmd = "hydra -C %s -I -e nsr -f -s %s %s http-get / |tee %s" % (userpass_list, self.port, self.target, outfile)
-        utils.run_cmd(cmd)
+            cmd = "hydra -C %s -R -e nsr -f -s %s %s http-get / |tee %s" % (userpass_list, self.port, self.target, outfile)
+        utils.run_cmd(cmd, wdir=self.output_dir)
 
 
     def brute(self):
