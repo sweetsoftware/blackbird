@@ -38,7 +38,7 @@ def _recon_scan(target, output_dir):
         i.start()
     for i in jobs:
         utils.log("Waiting for job %s ..." % i, 'info')
-        i.join(config.THREAD_TIMEOUT)
+        i.join()
 
 
 def run(output_dir):
@@ -50,7 +50,8 @@ def run(output_dir):
     for target in utils.get_host_list(sweep_file):
         scan_p = (target, output_dir)
         jobs.append(scan_p)
-    pool = multiprocessing.Pool()
+
+    pool = multiprocessing.Pool(50)
     pool.starmap(_recon_scan, jobs)
     pool.close()
     pool.join()

@@ -70,7 +70,13 @@ __________.__                 __   ___.   .__           .___
     config.ENUM = args.enum
     config.BRUTE = args.brute
     config.SCAN = args.scan
-    config.OUTPUT_PATH = args.output
+    if os.path.isabs(args.output):
+        config.OUTPUT_PATH = args.output
+    else:
+        config.OUTPUT_PATH = os.path.join(os.getcwd(), args.output)
+    if not os.path.exists(config.OUTPUT_PATH):
+        os.makedirs(config.OUTPUT_PATH)
+        utils.log('Created output directory %s.' % config.OUTPUT_PATH, 'info')
     config.SWEEP = args.sweep
     config.MODULES = utils.get_module_list()
     config.ONLY_CUSTOM_BRUTE = args.only_custom_brute
@@ -121,11 +127,6 @@ __________.__                 __   ___.   .__           .___
         utils.log('Targets options (-t) is only processed when a new --sweep or --no-sweep scan is performed. Otherwise, the already existing sweep.xml file in the output dir is used to list targets.', 'info')
         exit(1)
 
-    # Output directory creation
-    if not os.path.exists(config.OUTPUT_PATH):
-        os.makedirs(config.OUTPUT_PATH)
-        utils.log('Created output directory %s.' % config.OUTPUT_PATH, 'info')
-
     # Load targets
     if args.target:
         targets = args.target
@@ -150,6 +151,7 @@ __________.__                 __   ___.   .__           .___
         # Do recon scan
         core.reconscan.run(output_path)
 
+    utils.log('Blackbird done.', 'info')
 
 if __name__ == "__main__":
     try:
