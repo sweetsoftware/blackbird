@@ -25,16 +25,13 @@ def _port_scan(target, output_dir):
     utils.run_cmd(cmd)
     tcp_scan = os.path.join(output_path, "ports-tcp.xml")
     udp_scan = os.path.join(output_path, "ports-udp.xml")
-    tcp_result = utils.parse_nmap_xml(tcp_scan)
-    udp_result = utils.parse_nmap_xml(udp_scan)
-    if not tcp_result and not udp_result:
+    port_scan_file = os.path.join(output_path, "port-scan.xml")
+    utils.merge_nmap_files([tcp_scan, udp_scan], port_scan_file)
+    results = utils.parse_nmap_xml(port_scan_file)
+    if not results:
         utils.log("No open ports on %s, deleting directory..." % target, "info")
         shutil.rmtree(output_path)
-    else:
-        if not tcp_result:
-            os.remove(tcp_scan)
-        if not udp_result:
-            os.remove(udp_scan)
+
 
 
 def run(output_dir):

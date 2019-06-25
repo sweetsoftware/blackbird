@@ -4177,37 +4177,3 @@ zimbra/
 zone-h.php
 ~/
 ~admin/
-
------------------
-DIRB v2.22    
-By The Dark Raver
------------------
-
-OUTPUT_FILE: /mnt/hgfs/A/pentest/pentest-repo/tools/custom_tools/Blackbird/blackbird/modules/http/urls.txt
-START_TIME: Tue Jun 18 16:13:13 2019
-URL_BASE: http://192.168.254.148:80/
-WORDLIST_FILES: msf2/192.168.254.148/tcp/80-http/dirb.txt
-OPTION: Printing LOCATION header
-OPTION: Not Recursive
-
------------------
-
-
-(!) FATAL: Error opening wordlist file: msf2/192.168.254.148/tcp/80-http/dirb.txt
-
------------------
-DIRB v2.22    
-By The Dark Raver
------------------
-
-OUTPUT_FILE: /mnt/hgfs/A/pentest/pentest-repo/tools/custom_tools/Blackbird/blackbird/modules/http/urls.txt
-START_TIME: Tue Jun 18 16:13:13 2019
-URL_BASE: http://192.168.254.148:8180/
-WORDLIST_FILES: msf2/192.168.254.148/tcp/8180-http/dirb.txt
-OPTION: Printing LOCATION header
-OPTION: Not Recursive
-
------------------
-
-
-(!) FATAL: Error opening wordlist file: msf2/192.168.254.148/tcp/8180-http/dirb.txt

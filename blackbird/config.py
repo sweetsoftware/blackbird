@@ -8,3 +8,5 @@ SCAN = False
 NOSWEEP = False
 OUTPUT_PATH = "."
 SWEEP = False
+THREAD_TIMEOUT = 350
+MODULES = []
