@@ -21,9 +21,9 @@ class ModuleInstance(Module):
 
     def do_bruteforce(self, outfile, user_list=None, pass_list=None, userpass_list=None):
         if user_list and pass_list:
-            cmd = "hydra -v -L %s -P %s -I -e nsr -f ssh://%s:%s|tee %s" % (user_list, pass_list, self.target, self.port, outfile)
+            cmd = "hydra -t 4 -v -L %s -P %s -I -e nsr -f ssh://%s:%s|tee %s" % (user_list, pass_list, self.target, self.port, outfile)
         elif userpass_list:
-            cmd = "hydra -v -C %s -I -e nsr -f ssh://%s:%s|tee %s" % (userpass_list, self.target, self.port, outfile)
+            cmd = "hydra -t 4 -v -C %s -I -e nsr -f ssh://%s:%s|tee %s" % (userpass_list, self.target, self.port, outfile)
         utils.run_cmd(cmd)
 
 
@@ -33,8 +33,9 @@ class ModuleInstance(Module):
         pass_list = self.get_ressource_path('ssh_passwords.txt')
         userpass_list = self.get_ressource_path('ssh_userpass.txt')
         outfile = self.get_output_path('brute.txt')
-        self.do_bruteforce(outfile, user_list=user_list, pass_list=pass_list)
-        self.do_bruteforce(outfile, userpass_list=userpass_list)
+        if not config.ONLY_CUSTOM_BRUTE:
+            self.do_bruteforce(outfile, user_list=user_list, pass_list=pass_list)
+            self.do_bruteforce(outfile, userpass_list=userpass_list)
         if config.CUSTOM_USER_LIST:
             outfile = self.get_output_path('brute_custom1.txt')
             self.do_bruteforce(outfile, user_list=config.CUSTOM_USER_LIST, pass_list=config.CUSTOM_PASS_LIST)
