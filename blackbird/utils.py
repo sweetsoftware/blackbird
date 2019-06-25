@@ -11,11 +11,14 @@ logging.basicConfig(format='%(asctime)s::%(levelname)s::%(message)s',level=loggi
 logging.getLogger().addHandler(logging.FileHandler(filename='output.log', mode='w'))
 
 
-def run_cmd(cmdline, timeout=None, shell=True):
+def run_cmd(cmdline, timeout=None, shell=True, wdir=None):
     log("Running command : %s" % cmdline, "info")
     try:
-        subprocess.call(cmdline, shell=shell, timeout=timeout)
+        proc = subprocess.Popen(cmdline, shell=shell, cwd=wdir)
+        proc.wait(timeout=timeout)
     except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.wait()
         log("Command execution timed out for '%s'" % cmdline, 'info')
 
 
