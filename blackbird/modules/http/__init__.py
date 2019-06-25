@@ -14,14 +14,13 @@ class ModuleInstance(Module):
         Module.__init__(self, target, port, service, nmap_results, output_dir, proto)
         self.tls = self.is_tls(service, nmap_results)
         self.url = self.get_url(target, port, self.tls)
-
+        self.user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:67.0) Gecko/20100101 Firefox/67.0'
 
     def is_tls(self, service, nmap_results):
         tls = False
-        if service == 'http':
-            if nmap_results['tunnel'] == 'ssl':
-                tls = True
         if service == 'https':
+            tls = True
+        elif nmap_results['tunnel'] == 'ssl':
             tls = True
         return tls
 
@@ -41,20 +40,24 @@ class ModuleInstance(Module):
     def can_run(self):
         if self.proto == 'tcp' and (self.service == 'http' or self.service == 'https'):
             return True
+        # nmap doesn't mark some HTTP services as so, check the servicefp attribute
+        elif "HTTP" in self.nmap_results["servicefp"]:
+            return True
         return False
 
 
     def enum(self):
         utils.log('Starting HTTP enumeration against %s' % (self.url), 'info')
-        
-        cmd = "whatweb --color=never --log-brief=%s %s" % (self.get_output_path('whatweb.txt'), self.url)
-        utils.run_cmd(cmd)
- 
-        cmd = "dirb %s %s -l -r -o %s" % (self.url, self.get_ressource_path('urls.txt'), self.get_output_path('dirb.txt'))
-        utils.run_cmd(cmd)
 
-        cmd = "xvfb-run -a cutycapt --url='%s' --out='%s'" % (self.url, self.get_output_path('screenshot.png'))
-        utils.run_cmd(cmd)
+        # Fingerprint web technologies
+        cmd = "whatweb --user-agent '%s' --color=never --log-brief=%s %s" % \
+              (self.user_agent, self.get_output_path('whatweb.txt'), self.url)
+        utils.run_cmd(cmd, timeout=20)
+
+        # Screenshot web page
+        cmd = "xvfb-run -a chromium --ignore-certificate-errors  --headless --no-sandbox --window-size=1920,1080 --screenshot='%s' '%s'" % \
+              (self.get_output_path("screenshot.png"), self.url)
+        utils.run_cmd(cmd, timeout=10)
 
 
     def do_bruteforce(self, outfile, user_list=None, pass_list=None, userpass_list=None):
@@ -66,16 +69,22 @@ class ModuleInstance(Module):
 
 
     def brute(self):
-        # Detect HTTP Basic authentication
+        # Bruteforce URLs
+        cmd = "dirb %s %s -l -b -t -r -o %s" % (
+        self.url, self.get_ressource_path('urls.txt'), self.get_output_path('dirb.txt'))
+        utils.run_cmd(cmd)
+
+        # Detect and bruteforce HTTP Basic authentication
         if 'WWW-Authenticate: Basic' not in subprocess.check_output('curl -kLI %s' % self.url, shell=True).decode('utf8'):
             return
         utils.log('Starting HTTP bruteforce against %s' % (self.url), 'info')
 
-        user_list = self.get_ressource_path('users.txt')
-        pass_list = self.get_ressource_path('pass.txt')
+        user_list = self.get_ressource_path('http_users.txt')
+        pass_list = self.get_ressource_path('http_passwords.txt')
+        userpass_list = self.get_ressource_path('http_userpass.txt')
         outfile = self.get_output_path('brute.txt')
         self.do_bruteforce(outfile, user_list=user_list, pass_list=pass_list)
-
+        self.do_bruteforce(outfile, userpass_list=userpass_list)
         if config.CUSTOM_USER_LIST:
             outfile = self.get_output_path('brute_custom1.txt')
             self.do_bruteforce(outfile, user_list=config.CUSTOM_USER_LIST, pass_list=config.CUSTOM_PASS_LIST)

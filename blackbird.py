@@ -3,6 +3,7 @@
 import argparse
 import os
 import traceback
+import glob
 
 from blackbird import core
 from blackbird import utils
@@ -58,6 +59,8 @@ __________.__                 __   ___.   .__           .___
     parser.add_argument('--enum', action='store_true', help='Enumerate target')
     parser.add_argument('--scan', action='store_true', help='Perform port scan')
     parser.add_argument('--brute', action='store_true', help='Perform login bruteforce')
+    parser.add_argument('--nmap-import', help='Import nmap XML files (comma separated)')
+    parser.add_argument('-M', '--modules', help='Run only selected modules (for --enum and --brute operations)')
     args = parser.parse_args()
 
     # Scan configuration
@@ -68,27 +71,41 @@ __________.__                 __   ___.   .__           .___
     config.SCAN = args.scan
     config.OUTPUT_PATH = args.output
     config.SWEEP = args.sweep
+    config.MODULES = utils.get_module_list()
+
+    if args.modules:
+        config.MODULES=args.modules.split(',')
+        installed_modules = utils.get_module_list()
+        for i in config.MODULES:
+            if i not in installed_modules:
+                utils.log('Module not found: %s' % i, 'info')
+                exit(1)
+    if args.nmap_import:
+        nmap_xml_files = []
+        for path in args.nmap_import.split(','):
+            nmap_xml_files += glob.glob(path)
+        utils.import_nmap_scans(nmap_xml_files, config.OUTPUT_PATH)
 
     # Custom dictionnaries
     if args.userlist and not args.passlist or args.passlist and not args.userlist:
-        print('userlist and password list should be used together.')
+        utils.log('userlist and password list should be used together.')
         exit(1)
     if args.userlist:
         if os.path.exists(args.userlist) and os.path.isfile(args.userlist):
             config.CUSTOM_USER_LIST = args.userlist
         else:
-            print('No such file : %s' % args.userlist)
+            utils.log('No such file : %s' % args.userlist)
             exit(1)
         if os.path.exists(args.passlist) and os.path.isfile(args.passlist):
             config.CUSTOM_PASS_LIST = args.passlist
         else:
-            print('No such file : %s' % args.passlist)
+            utils.log('No such file : %s' % args.passlist)
             exit(1)
     if args.userpasslist:
         if os.path.exists(args.userpasslist) and os.path.isfile(args.userpasslist):
             config.CUSTOM_USERPASS_LIST = args.userpasslist
         else:
-            print('No such file : %s' % args.userpasslist)
+            utils.log('No such file : %s' % args.userpasslist)
             exit(1)
     
     # Check options
@@ -99,7 +116,7 @@ __________.__                 __   ___.   .__           .___
         utils.log('Targets options (-t) is only processed when a new --sweep or --no-sweep scan is performed. Otherwise, the already existing sweep.xml file in the output dir is used to list targets.', 'info')
         exit(1)
 
-    # Output directory handling
+    # Output directory creation
     if not os.path.exists(config.OUTPUT_PATH):
         os.makedirs(config.OUTPUT_PATH)
         utils.log('Created output directory %s.' % config.OUTPUT_PATH, 'info')

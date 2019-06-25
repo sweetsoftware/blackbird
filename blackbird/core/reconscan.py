@@ -11,7 +11,7 @@ def _recon_scan(target, output_dir):
     utils.log('Performing recon scan on target %s' % target, 'info')
     jobs = []
     output_path = os.path.join(output_dir, target)
-    nmap_xml_file = os.path.join(output_path, "ports-tcp.xml")
+    nmap_xml_file = os.path.join(output_path, "port-scan.xml")
     if not os.path.exists(nmap_xml_file):
         utils.log("No TCP scan file : %s Either no port is open or you didn't perform port scan (--scan)" % nmap_xml_file, 'info')
         return
@@ -25,7 +25,7 @@ def _recon_scan(target, output_dir):
         output_dir = os.path.join(output_path, 'tcp', port + "-" + service)
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
-        for module_name in utils.get_module_list():
+        for module_name in config.MODULES:
             module_obj = getattr(globals()['modules'], module_name)
             module_instance = module_obj.ModuleInstance(target, port, service,  nmap_results[target]['tcp'][port], output_dir, 'tcp')
             if module_instance.can_run():
@@ -38,7 +38,7 @@ def _recon_scan(target, output_dir):
         i.start()
     for i in jobs:
         utils.log("Waiting for job %s ..." % i, 'info')
-        i.join()
+        i.join(config.THREAD_TIMEOUT)
 
 
 def run(output_dir):
