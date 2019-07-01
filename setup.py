@@ -2,10 +2,13 @@
 
 import os
 
+from blackbird import config
 
-os.system('pip3 install -r requirements.txt')
+os.system('pip3 install -r ' + os.path.join(config.INSTALL_DIR, 'requirements.txt'))
 
 from blackbird import utils
-for module in utils.get_module_list():
-    os.system('./blackbird/modules/%s/setup.sh' % module)
 
+for module in utils.get_module_list():
+    cmd = os.path.join(config.INSTALL_DIR, 'blackbird/modules/%s/setup.sh' % module)
+    if os.path.exists(cmd):
+        os.system(cmd)
