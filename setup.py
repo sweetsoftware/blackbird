@@ -12,3 +12,6 @@ for module in utils.get_module_list():
     cmd = os.path.join(config.INSTALL_DIR, 'blackbird/modules/%s/setup.sh' % module)
     if os.path.exists(cmd):
         os.system(cmd)
+
+os.system('ln -s ' + os.path.join(config.INSTALL_DIR, 'blackbird.py') + ' /usr/local/bin/blackbird')
+
