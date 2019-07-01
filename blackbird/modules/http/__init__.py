@@ -61,17 +61,21 @@ class ModuleInstance(Module):
 
 
     def do_bruteforce(self, outfile, user_list=None, pass_list=None, userpass_list=None):
+        if self.tls:
+            method = 'https-get'
+        else:
+            method = 'http-get'
         if user_list and pass_list:
-            cmd = "hydra -L %s -P %s -R -e nsr -f -s %s %s http-get / |tee %s" % (user_list, pass_list, self.port, self.target, outfile)
+            cmd = "hydra -L %s -P %s -I -e nsr -f -s %s %s %s / |tee %s" % (user_list, pass_list, self.port, self.target, method, outfile)
         elif userpass_list:
-            cmd = "hydra -C %s -R -e nsr -f -s %s %s http-get / |tee %s" % (userpass_list, self.port, self.target, outfile)
+            cmd = "hydra -C %s -I -f -s %s %s %s / |tee %s" % (userpass_list, self.port, self.target, method, outfile)
         utils.run_cmd(cmd, wdir=self.output_dir)
 
 
     def brute(self):
         # Bruteforce URLs
-        cmd = "dirb %s %s -l -b -t -r -o %s" % (
-        self.url, self.get_ressource_path('urls.txt'), self.get_output_path('dirb.txt'))
+        cmd = "wfuzz -Z -w %s -u %s/FUZZ -L --hc 404 -f %s,raw" % (self.get_ressource_path('urls.txt'),
+            self.url, self.get_output_path('wfuzz.txt'))
         utils.run_cmd(cmd)
 
         # Detect and bruteforce HTTP Basic authentication

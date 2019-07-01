@@ -7,6 +7,9 @@ import shutil
 from bs4 import BeautifulSoup
 import termcolor
 
+from blackbird import config
+
+
 logging.basicConfig(format='%(asctime)s::%(levelname)s::%(message)s',level=logging.DEBUG)
 logging.getLogger().addHandler(logging.FileHandler(filename='output.log', mode='w'))
 
@@ -138,7 +141,7 @@ def get_host_list(nmap_xml):
 
 
 def get_module_list():
-    module_list = glob.glob(os.path.join('./blackbird/modules/', "*"))
+    module_list = glob.glob(os.path.join(config.INSTALL_DIR, 'blackbird/modules/', "*"))
     module_list =[os.path.basename(f) for f in module_list if
                   not (not os.path.isdir(f) or not os.path.exists(os.path.join(f, '__init__.py')))]
     return module_list
