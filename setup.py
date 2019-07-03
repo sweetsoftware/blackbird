@@ -13,5 +13,5 @@ for module in utils.get_module_list():
     if os.path.exists(cmd):
         os.system(cmd)
 
-os.system('ln -s ' + os.path.join(config.INSTALL_DIR, 'blackbird.py') + ' /usr/local/bin/blackbird')
+os.system('ln -sf ' + os.path.join(config.INSTALL_DIR, 'blackbird.py') + ' /usr/local/bin/blackbird')
 
