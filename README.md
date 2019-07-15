@@ -51,22 +51,31 @@ Common usage examples:
 ```
 
 During module execution, press **B + RETURN** to pause the scan and display the interactive menu.
-This can be used to kill modules which are taking too much time.
+This can be used to kill modules which are eating too much time.
 
 ```
-[*] Invoking interactive menu...
+2019-07-15 15:12:50,335::INFO::[*] Invoking interactive menu...
 
 ********************************************************************************
 Running processes:
 
-0 - PID=10627 CMD=['/bin/sh', '-c', "chromium --ignore-certificate-errors  --headless --no-sandbox --window-size=1920,1080 --screenshot='/mnt/hgfs/A/pentest/blackbird/out2/192.168.254.148/tcp/80-http/screenshot.png' 'http://192.168.254.148:80'"]
+0 - PID=11981
+CREATED=2019-07-15 15:12:48
+CMD=['/bin/sh', '-c', "whatweb --user-agent 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:67.0) Gecko/20100101 Firefox/67.0' --color=never --log-brief=/mnt/hgfs/A/pentest/blackbird/out2/192.168.254.148/tcp/80-http/whatweb.txt http://192.168.254.148:80"]
 
-1 - PID=10579 CMD=['/bin/sh', '-c', 'hydra -t 4 -v -L /mnt/hgfs/A/pentest/blackbird/blackbird/modules/ssh/ssh_usernames.txt -P /mnt/hgfs/A/pentest/blackbird/blackbird/modules/ssh/ssh_passwords.txt -I -e nsr -f ssh://192.168.254.148:22|tee /mnt/hgfs/A/pentest/blackbird/out2/192.168.254.148/tcp/22-ssh/brute.txt']
+1 - PID=11984
+CREATED=2019-07-15 15:12:48
+CMD=['/bin/sh', '-c', 'hydra -t 4 -v -L /mnt/hgfs/A/pentest/blackbird/blackbird/modules/ssh/ssh_usernames.txt -P /mnt/hgfs/A/pentest/blackbird/blackbird/modules/ssh/ssh_passwords.txt -I -e nsr -f ssh://192.168.254.148:22|tee /mnt/hgfs/A/pentest/blackbird/out2/192.168.254.148/tcp/22-ssh/brute.txt']
 
-2 - PID=10580 CMD=['/bin/sh', '-c', 'wfuzz -Z -w /mnt/hgfs/A/pentest/blackbird/blackbird/modules/http/urls.txt -u http://192.168.254.148:80/FUZZ -L --hc 404 -f /mnt/hgfs/A/pentest/blackbird/out2/192.168.254.148/tcp/80-http/wfuzz.txt,raw']
+2 - PID=11986
+CREATED=2019-07-15 15:12:48
+CMD=['/bin/sh', '-c', 'wfuzz -Z -w /mnt/hgfs/A/pentest/blackbird/blackbird/modules/http/urls.txt -u http://192.168.254.148:80/FUZZ -L --hc 404 -f /mnt/hgfs/A/pentest/blackbird/out2/192.168.254.148/tcp/80-http/wfuzz.txt,raw']
 ********************************************************************************
-Choose processes to kill (comma separated) (-1 to kill all): 
+Choose processes to kill (comma separated) (-1 to kill all): 0
 
+2019-07-15 15:13:06,108::INFO::Killing pid 11979
+
+2019-07-15 15:13:06,115::INFO::Resuming jobs...
 ```
 
 
