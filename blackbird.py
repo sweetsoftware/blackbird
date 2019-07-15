@@ -75,6 +75,8 @@ __________.__                 __   ___.   .__           .___
         exit(0)
 
     if not args.working_dir:
+        parser.print_help()
+        print("")
         print("-w/--working-dir parameter missing")
         exit(1)
 
