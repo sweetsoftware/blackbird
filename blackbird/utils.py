@@ -3,6 +3,7 @@ import subprocess
 import os
 import glob
 import shutil
+import signal
 
 from bs4 import BeautifulSoup
 import termcolor
@@ -19,6 +20,9 @@ def run_cmd(cmdline, timeout=None, shell=True, wdir=None):
     try:
         proc = subprocess.Popen(cmdline, shell=shell, cwd=wdir)
         proc.wait(timeout=timeout)
+        #stdout, stderr = proc.communicate()
+        #output = stdout + stderr
+        #log(output)
     except subprocess.TimeoutExpired:
         proc.kill()
         proc.wait()
@@ -34,7 +38,7 @@ def log(log_str, log_type=''):
 
 
 def parse_nmap_xml(filename):
-    log("Parsing nmap XML...", "info")
+    log("Parsing nmap XML %s" % filename, "info")
     host_info = dict()
     xml_file = open(filename, 'r')
     soup = BeautifulSoup(xml_file, 'lxml')
@@ -43,9 +47,10 @@ def parse_nmap_xml(filename):
         host_domains = host.find_all('hostname')
         if host_domains:
             host_addr = host_domains[0]['name']
-        host_info[host_addr] = dict()
-        host_info[host_addr]["tcp"] = dict()
-        host_info[host_addr]["udp"] = dict()
+        if host_addr not in host_info:
+            host_info[host_addr] = dict()
+            host_info[host_addr]["tcp"] = dict()
+            host_info[host_addr]["udp"] = dict()
         for port in host.find_all('port'):
             if port.state["state"] == "open":
                 portid = port['portid']

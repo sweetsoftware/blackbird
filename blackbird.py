@@ -49,13 +49,13 @@ __________.__                 __   ___.   .__           .___
     """)
     parser = argparse.ArgumentParser(description="Network reconnaissance and enumeration tool.")
     parser.add_argument('-t', '--target', help='Target (nmap format) or file with targets (one per line)')
-    parser.add_argument('-o', '--output', help='Output directory (created if does not exist)', required=True)
+    parser.add_argument('-w', '--working-dir', help='Working directory (created if does not exist)', required=True)
     parser.add_argument('--sweep', help='Ping sweep targets', action='store_true')
     parser.add_argument('--no-sweep', help='Treat all hosts as alive (no ping sweep)', action='store_true')
     parser.add_argument('-U', '--userlist', help='Custom userlist to try on all services')
     parser.add_argument('-P', '--passlist', help='Custom password list to try on all service')
     parser.add_argument('-C', '--userpasslist', help='User/password combinations (user:pass one by line)')
-    parser.add_argument('-F', '--fast', action='store_true', help='Fast scan (not all ports checked)')
+    parser.add_argument('-F', '--full', action='store_true', help='Full port scan (all ports checked)')
     parser.add_argument('--enum', action='store_true', help='Enumerate target')
     parser.add_argument('--scan', action='store_true', help='Perform port scan')
     parser.add_argument('--brute', action='store_true', help='Perform login bruteforce')
@@ -66,14 +66,14 @@ __________.__                 __   ___.   .__           .___
 
     # Scan configuration
     config.NOSWEEP = args.no_sweep
-    config.FAST_SCAN = args.fast
+    config.FULL_SCAN = args.full
     config.ENUM = args.enum
     config.BRUTE = args.brute
     config.SCAN = args.scan
-    if os.path.isabs(args.output):
-        config.OUTPUT_PATH = args.output
+    if os.path.isabs(args.working_dir):
+        config.OUTPUT_PATH = args.working_dir
     else:
-        config.OUTPUT_PATH = os.path.join(os.getcwd(), args.output)
+        config.OUTPUT_PATH = os.path.join(os.getcwd(), args.working_dir)
     if not os.path.exists(config.OUTPUT_PATH):
         os.makedirs(config.OUTPUT_PATH)
         utils.log('Created output directory %s.' % config.OUTPUT_PATH, 'info')
