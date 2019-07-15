@@ -167,7 +167,7 @@ def run(output_dir):
             running_jobs.append(next_job)
             next_job.start()
             remaining_jobs.remove(next_job)
-            utils.log('Remaining jobs: %s' % remaining_jobs, 'info')
+            utils.log('Remaining jobs: %s' % len(remaining_jobs), 'info')
             continue
     utils.log('Waiting remaining jobs...', 'info')
     for job in running_jobs:

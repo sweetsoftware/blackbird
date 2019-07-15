@@ -74,7 +74,7 @@ class ModuleInstance(Module):
 
     def brute(self):
         # Bruteforce URLs
-        cmd = "wfuzz -Z -w %s -u %s/FUZZ -L --hc 404 -f %s,raw" % (self.get_ressource_path('urls.txt'),
+        cmd = "wfuzz -Z -w %s -u %s/FUZZ -L --hc 404 -f %s,raw" % (self.get_resource_path('urls.txt'),
             self.url, self.get_output_path('wfuzz.txt'))
         utils.run_cmd(cmd)
 
@@ -83,9 +83,9 @@ class ModuleInstance(Module):
             return
         utils.log('Starting HTTP bruteforce against %s' % (self.url), 'info')
 
-        user_list = self.get_ressource_path('http_users.txt')
-        pass_list = self.get_ressource_path('http_passwords.txt')
-        userpass_list = self.get_ressource_path('http_userpass.txt')
+        user_list = self.get_resource_path('http_users.txt')
+        pass_list = self.get_resource_path('http_passwords.txt')
+        userpass_list = self.get_resource_path('http_userpass.txt')
         outfile = self.get_output_path('brute.txt')
         if not config.ONLY_CUSTOM_BRUTE:
             self.do_bruteforce(outfile, user_list=user_list, pass_list=pass_list)

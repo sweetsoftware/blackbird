@@ -14,9 +14,14 @@ class Module:
         self.nmap_results = nmap_results
         self.output_dir = output_dir
         self.proto = proto
-        self.module_dir = os.path.dirname(inspect.getfile(self.__class__))    
+        self.module_dir = os.path.dirname(inspect.getfile(self.__class__))
+        self.product = nmap_results['product']
+        self.version = nmap_results['version']
+        self.extrainfo = nmap_results['extrainfo']
+        self.tunnel = nmap_results['tunnel']
+        self.servicefp = nmap_results['servicefp']
 
-    def get_ressource_path(self, filename):
+    def get_resource_path(self, filename):
         return os.path.join(self.module_dir, filename)
 
     def get_output_path(self, filename):
