@@ -10,7 +10,7 @@ class ModuleInstance(Module):
 
 
     def can_run(self):
-        if self.proto == 'tcp' and (self.service == 'ssh'):
+        if self.proto == 'tcp' and self.service == 'ssh':
             return True
         return False
 
@@ -29,9 +29,9 @@ class ModuleInstance(Module):
 
     def brute(self):
         utils.log('Starting SSH bruteforce against %s:%s' % (self.target, self.port), 'info')
-        user_list = self.get_ressource_path('ssh_usernames.txt')
-        pass_list = self.get_ressource_path('ssh_passwords.txt')
-        userpass_list = self.get_ressource_path('ssh_userpass.txt')
+        user_list = self.get_resource_path('ssh_usernames.txt')
+        pass_list = self.get_resource_path('ssh_passwords.txt')
+        userpass_list = self.get_resource_path('ssh_userpass.txt')
         outfile = self.get_output_path('brute.txt')
         if not config.ONLY_CUSTOM_BRUTE:
             self.do_bruteforce(outfile, user_list=user_list, pass_list=pass_list)
