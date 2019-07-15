@@ -33,7 +33,6 @@ def _port_scan(target, output_dir):
         shutil.rmtree(output_path)
 
 
-
 def run(output_dir):
     jobs = []
 
