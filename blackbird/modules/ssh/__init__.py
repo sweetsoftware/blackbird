@@ -24,7 +24,7 @@ class ModuleInstance(Module):
             cmd = "hydra -t 4 -v -L %s -P %s -I -e nsr -f ssh://%s:%s|tee %s" % (user_list, pass_list, self.target, self.port, outfile)
         elif userpass_list:
             cmd = "hydra -t 4 -v -C %s -I -f ssh://%s:%s|tee %s" % (userpass_list, self.target, self.port, outfile)
-        utils.run_cmd(cmd)
+        utils.run_cmd(cmd, wdir=self.get_output_path(''))
 
 
     def brute(self):
