@@ -2,7 +2,7 @@
 
 A module is a folder in the "blackbird/modules" directory.
 
-It follows the following structure:
+It follows this structure:
 
 ```
 <modulename>/
