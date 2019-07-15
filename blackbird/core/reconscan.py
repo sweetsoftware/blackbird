@@ -6,6 +6,7 @@ import time
 import termcolor
 import select
 import sys
+import datetime
 
 from blackbird import utils
 from blackbird import config
@@ -28,8 +29,9 @@ class ReconProcess(multiprocessing.Process):
     def to_str(self):
         current_proc = psutil.Process(self.pid)
         out = ""
+        creation_time = datetime.datetime.fromtimestamp(current_proc.create_time()).strftime("%Y-%m-%d %H:%M:%S")
         for child in current_proc.children():
-            out += "PID=" + str(child.pid) + " CMD=" + str(child.cmdline())
+            out += "PID=" + str(child.pid) + "\nCREATED=" + creation_time + "\nCMD=" + str(child.cmdline())
         return out
 
     def suspend(self):
@@ -86,7 +88,7 @@ def interrupt_menu(*args):
     print("Running processes:")
     for i in range(len(running_jobs)):
         job = running_jobs[i]
-        print("\n%s - %s" % (i, job.to_str()))
+        print("\n"+ termcolor.colored(i, 'green') + " - %s" % job.to_str())
     print(termcolor.colored("*" * 80, 'green'))
 
     to_kill = input("Choose processes to kill (comma separated) (-1 to kill all): ")

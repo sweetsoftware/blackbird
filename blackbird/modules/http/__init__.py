@@ -52,12 +52,12 @@ class ModuleInstance(Module):
         # Fingerprint web technologies
         cmd = "whatweb --user-agent '%s' --color=never --log-brief=%s %s" % \
               (self.user_agent, self.get_output_path('whatweb.txt'), self.url)
-        utils.run_cmd(cmd, timeout=20)
+        utils.run_cmd(cmd)
 
         # Screenshot web page
         cmd = "chromium --ignore-certificate-errors  --headless --no-sandbox --window-size=1920,1080 --screenshot='%s' '%s'" % \
               (self.get_output_path("screenshot.png"), self.url)
-        utils.run_cmd(cmd, timeout=10)
+        utils.run_cmd(cmd)
 
 
     def do_bruteforce(self, outfile, user_list=None, pass_list=None, userpass_list=None):

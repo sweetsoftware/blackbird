@@ -49,20 +49,34 @@ __________.__                 __   ___.   .__           .___
     """)
     parser = argparse.ArgumentParser(description="Network reconnaissance and enumeration tool.")
     parser.add_argument('-t', '--target', help='Target (nmap format) or file with targets (one per line)')
-    parser.add_argument('-w', '--working-dir', help='Working directory (created if does not exist)', required=True)
+    parser.add_argument('-w', '--working-dir', help='Working directory (created if does not exist)')
     parser.add_argument('--sweep', help='Ping sweep targets', action='store_true')
     parser.add_argument('--no-sweep', help='Treat all hosts as alive (no ping sweep)', action='store_true')
     parser.add_argument('-U', '--userlist', help='Custom userlist to try on all services')
-    parser.add_argument('-P', '--passlist', help='Custom password list to try on all service')
+    parser.add_argument('-P', '--passlist', help='Custom password list to try on all services')
     parser.add_argument('-C', '--userpasslist', help='User/password combinations (user:pass one by line)')
     parser.add_argument('-F', '--full', action='store_true', help='Full port scan (all ports checked)')
-    parser.add_argument('--enum', action='store_true', help='Enumerate target')
+    parser.add_argument('--enum', action='store_true', help='Run service enumeration modules')
     parser.add_argument('--scan', action='store_true', help='Perform port scan')
-    parser.add_argument('--brute', action='store_true', help='Perform login bruteforce')
+    parser.add_argument('--brute', action='store_true', help='Run service bruteforce modules')
     parser.add_argument('--nmap-import', help='Import nmap XML files (comma separated)')
     parser.add_argument('-M', '--modules', help='Run only selected modules (for --enum and --brute operations)')
-    parser.add_argument('--only-custom-brute', action='store_true', help='--brute will run only custom wordlists on bruteforce attempts')
+    parser.add_argument('--only-custom-brute', action='store_true',
+                        help='--brute will run only custom wordlists on bruteforce attempts')
+    parser.add_argument('--list-modules', action='store_true',
+                        help='List available modules')
     args = parser.parse_args()
+
+    if args.list_modules:
+        print("Available modules:")
+        print("=" * 20)
+        for module in utils.get_module_list():
+            print("*", module)
+        exit(0)
+
+    if not args.working_dir:
+        print("-w/--working-dir parameter missing")
+        exit(1)
 
     # Scan configuration
     config.NOSWEEP = args.no_sweep

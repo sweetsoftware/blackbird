@@ -11,7 +11,7 @@ import termcolor
 from blackbird import config
 
 
-logging.basicConfig(format='%(asctime)s::%(levelname)s::%(message)s',level=logging.DEBUG)
+logging.basicConfig(format='\n%(asctime)s::%(levelname)s::%(message)s',level=logging.DEBUG)
 logging.getLogger().addHandler(logging.FileHandler(filename='output.log', mode='w'))
 
 
@@ -20,9 +20,6 @@ def run_cmd(cmdline, timeout=None, shell=True, wdir=None):
     try:
         proc = subprocess.Popen(cmdline, shell=shell, cwd=wdir)
         proc.wait(timeout=timeout)
-        #stdout, stderr = proc.communicate()
-        #output = stdout + stderr
-        #log(output)
     except subprocess.TimeoutExpired:
         proc.kill()
         proc.wait()
