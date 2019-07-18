@@ -50,13 +50,13 @@ class ModuleInstance(Module):
         utils.log('Starting HTTP enumeration against %s' % (self.url), 'info')
 
         # Fingerprint web technologies
-        cmd = "whatweb --user-agent '%s' --color=never --log-brief=%s %s" % \
+        cmd = "whatweb --color=always --user-agent '%s' --log-brief=%s %s" % \
               (self.user_agent, self.get_output_path('whatweb.txt'), self.url)
         utils.run_cmd(cmd)
 
         # Screenshot web page
-        cmd = "chromium --ignore-certificate-errors  --headless --no-sandbox --window-size=1920,1080 --screenshot='%s' '%s'" % \
-              (self.get_output_path("screenshot.png"), self.url)
+        cmd = "chromium --ignore-certificate-errors --disable-gpu --headless --no-sandbox --window-size=1920,1080 "\
+            "--screenshot='%s' '%s' 2>/dev/null" % (self.get_output_path("screenshot.png"), self.url)
         utils.run_cmd(cmd)
 
 
@@ -66,16 +66,16 @@ class ModuleInstance(Module):
         else:
             method = 'http-get'
         if user_list and pass_list:
-            cmd = "hydra -L %s -P %s -I -e nsr -f -s %s %s %s / |tee %s" % (user_list, pass_list, self.port, self.target, method, outfile)
+            cmd = "hydra -L %s -P %s -I -e nsr -f -o %s -s %s %s %s /" % (user_list, pass_list, outfile, self.port, self.target, method)
         elif userpass_list:
-            cmd = "hydra -C %s -I -f -s %s %s %s / |tee %s" % (userpass_list, self.port, self.target, method, outfile)
+            cmd = "hydra -C %s -I -f -o %s -s %s %s %s /" % (userpass_list, outfile, self.port, self.target, method)
         utils.run_cmd(cmd, wdir=self.output_dir)
 
 
     def brute(self):
         # Bruteforce URLs
-        cmd = "wfuzz -Z -w %s -u %s/FUZZ -L --hc 404 -f %s,raw" % (self.get_resource_path('urls.txt'),
-            self.url, self.get_output_path('wfuzz.txt'))
+        cmd = "wfuzz -Z -w '%s' -c -u '%s/FUZZ' -L --hc 404 -f '%s,html'|tee '%s'" % (self.get_resource_path('urls.txt'),
+            self.url, self.get_output_path('wfuzz.html'), self.get_output_path('wfuzz.txt'))
         utils.run_cmd(cmd)
 
         # Detect and bruteforce HTTP Basic authentication

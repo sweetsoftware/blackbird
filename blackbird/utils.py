@@ -4,6 +4,7 @@ import os
 import glob
 import shutil
 import signal
+import sys
 
 from bs4 import BeautifulSoup
 import termcolor
@@ -16,20 +17,33 @@ logging.getLogger().addHandler(logging.FileHandler(filename='output.log', mode='
 
 
 def run_cmd(cmdline, timeout=None, shell=True, wdir=None):
-    log("Running command : %s" % cmdline, "info")
+    log("Running command : %s" % cmdline)
     try:
-        proc = subprocess.Popen(cmdline, shell=shell, cwd=wdir)
-        proc.wait(timeout=timeout)
+        proc = subprocess.Popen(cmdline, shell=shell, cwd=wdir, stdout=subprocess.PIPE)
+        proc_output = ""
+        while True:
+            output = proc.stdout.readline()
+            if proc.poll() is not None:
+                break
+            if output:
+                output = output.decode('utf8')
+                sys.stdout.write(output)
+                proc_output += output
+        log('Command finished: ' + cmdline + '\n\n' + proc_output)
+        return proc_output
     except subprocess.TimeoutExpired:
         proc.kill()
         proc.wait()
-        log("Command execution timed out for '%s'" % cmdline, 'info')
+        log("Command execution timed out for '%s'" % cmdline, 'warning')
 
 
 def log(log_str, log_type=''):
-    if log_type in ['info']:
-        if log_type == 'info':
-            logging.info(termcolor.colored('[*] ' + log_str + "\n", 'green'))
+    if log_type == 'info':
+        logging.info(termcolor.colored('[*] ' + log_str + "\n", 'green'))
+    elif log_type == 'error':
+        logging.critical(termcolor.colored('[*] ' + log_str + "\n", 'red'))
+    elif log_type == 'warning':
+        logging.warning(termcolor.colored('[*] ' + log_str + "\n", 'yellow'))
     else:
         logging.info(log_str)
 
@@ -125,7 +139,7 @@ def import_nmap_scans(nmap_xml_files, output_dir):
     log("Importing %s ..." % nmap_xml_files, 'info')
     for xml_file in nmap_xml_files:
         if not os.path.exists(xml_file):
-            log("File does not exist: %s" % xml_file, 'info')
+            log("File does not exist: %s" % xml_file, 'error')
             return
     log("Creating output dir %s" % output_dir, 'info')
     if not os.path.exists(output_dir):
