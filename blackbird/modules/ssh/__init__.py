@@ -21,9 +21,9 @@ class ModuleInstance(Module):
 
     def do_bruteforce(self, outfile, user_list=None, pass_list=None, userpass_list=None):
         if user_list and pass_list:
-            cmd = "hydra -t 4 -v -L %s -P %s -I -e nsr -f ssh://%s:%s|tee %s" % (user_list, pass_list, self.target, self.port, outfile)
+            cmd = "hydra -t 4 -v -L %s -P %s -I -e nsr -o %s -f ssh://%s:%s" % (user_list, pass_list, outfile, self.target,self.port)
         elif userpass_list:
-            cmd = "hydra -t 4 -v -C %s -I -f ssh://%s:%s|tee %s" % (userpass_list, self.target, self.port, outfile)
+            cmd = "hydra -t 4 -v -C %s -I -f -o %s ssh://%s:%s" % (userpass_list, outfile, self.target, self.port)
         utils.run_cmd(cmd, wdir=self.get_output_path(''))
 
 

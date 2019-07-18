@@ -14,3 +14,4 @@ MODULES = []
 ONLY_CUSTOM_BRUTE = False
 INSTALL_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 MAX_JOBS = 10
+TARGET_FILE = ''

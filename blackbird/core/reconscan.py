@@ -54,7 +54,6 @@ class ReconProcess(multiprocessing.Process):
 
 
 def get_target_modules(target, output_dir):
-    utils.log('Performing recon scan on target %s' % target, 'info')
     jobs = []
     output_path = os.path.join(output_dir, target)
     nmap_xml_file = os.path.join(output_path, "port-scan.xml")
@@ -140,22 +139,25 @@ def run(output_dir):
         utils.log("Could not parse host list... have you performed a ping sweep first (--sweep) or specified the --no-sweep flag ? ", 'info')
         exit(1)
 
+    enum_jobs = []
+    brute_jobs = []
+
     for target in utils.get_host_list(sweep_file):
         target_modules = get_target_modules(target, output_dir)
         if target_modules:
             for module in target_modules:
                 if config.ENUM:
                     proc = ReconProcess(module.enum)
-                    remaining_jobs.append(proc)
-            for module in target_modules:
+                    enum_jobs.append(proc)
                 if config.BRUTE:
                     proc = ReconProcess(module.brute)
-                    remaining_jobs.append(proc)
+                    brute_jobs.append(proc)
+    remaining_jobs = enum_jobs + brute_jobs
 
     while remaining_jobs or running_jobs:
         cmd = get_user_input()
         if cmd:
-            if cmd.strip() == 'b':
+            if cmd.strip().endswith('b'):
                 interrupt_menu()
                 continue
         for job in running_jobs:
@@ -167,7 +169,7 @@ def run(output_dir):
             running_jobs.append(next_job)
             next_job.start()
             remaining_jobs.remove(next_job)
-            utils.log('Remaining jobs: %s' % len(remaining_jobs), 'info')
+            utils.log('Queued jobs: %s Currently running: %s' % (len(remaining_jobs), len(running_jobs)), 'info')
             continue
     utils.log('Waiting remaining jobs...', 'info')
     for job in running_jobs:

@@ -4,6 +4,7 @@ import argparse
 import os
 import traceback
 import glob
+import shutil
 
 from blackbird import core
 from blackbird import utils
@@ -145,19 +146,23 @@ __________.__                 __   ___.   .__           .___
 
     # Load targets
     if args.target:
+        target_file = os.path.join(config.OUTPUT_PATH, 'targets.txt')
         targets = args.target
         if os.path.exists(targets) and os.path.isfile(targets):
-            targets_file = targets
-            with open(targets_file, 'r') as f:
-                targets = ' '.join(f.readlines()).replace('\n', '')
+            shutil.copyfile(targets, target_file)
+        else:
+            with open(target_file, 'w') as f:
+                for i in targets.split(' '):
+                    f.write(i + "\n")
+        config.TARGET_FILE = target_file
         utils.log("Parsed targets : " + targets, 'info')
 
     output_path = config.OUTPUT_PATH
     # Do sweep scan or import all targets
     if config.NOSWEEP:
-        core.nosweep.run(targets, output_path)
+        core.nosweep.run(config.TARGET_FILE, output_path)
     elif config.SWEEP:
-        core.sweep.run(targets, output_path)
+        core.sweep.run(config.TARGET_FILE, output_path)
 
     if config.SCAN:
         # Do port scan
