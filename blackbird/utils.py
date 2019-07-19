@@ -5,6 +5,8 @@ import glob
 import shutil
 import signal
 import sys
+import datetime
+import fcntl
 
 from bs4 import BeautifulSoup
 import termcolor
@@ -19,17 +21,30 @@ logging.getLogger().addHandler(logging.FileHandler(filename='output.log', mode='
 def run_cmd(cmdline, timeout=None, shell=True, wdir=None):
     log("Running command : %s" % cmdline)
     try:
-        proc = subprocess.Popen(cmdline, shell=shell, cwd=wdir, stdout=subprocess.PIPE)
+        proc = subprocess.Popen(cmdline, shell=shell, cwd=wdir,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE, bufsize=1)
         proc_output = ""
+        start_time = datetime.datetime.now().timestamp()
+        proc_fl = fcntl.fcntl(proc.stdout, fcntl.F_GETFL)
+        fcntl.fcntl(proc.stdout, fcntl.F_SETFL, proc_fl | os.O_NONBLOCK)
         while True:
-            output = proc.stdout.readline()
+            # Exit if timeout expired
+            if timeout and (datetime.datetime.now().timestamp() - start_time) > timeout:
+                log("Command timed out: %s" % cmdline, 'warning')
+                break
+            # Exit if process has returned
             if proc.poll() is not None:
                 break
+            output = proc.stdout.readline()
+            # Print output if any
             if output:
                 output = output.decode('utf8')
                 sys.stdout.write(output)
                 proc_output += output
-        log('Command finished: ' + cmdline + '\n\n' + proc_output)
+        log(termcolor.colored('Command finished: ', 'green') + cmdline +
+            '\n\n' + \
+                           proc_output)
         return proc_output
     except subprocess.TimeoutExpired:
         proc.kill()
@@ -49,7 +64,6 @@ def log(log_str, log_type=''):
 
 
 def parse_nmap_xml(filename):
-    log("Parsing nmap XML %s" % filename, "info")
     host_info = dict()
     xml_file = open(filename, 'r')
     soup = BeautifulSoup(xml_file, 'lxml')

@@ -31,7 +31,7 @@ class Module:
         raise NotImplementedError("The can_run() method is not implemented in %s" % self.module_dir)
 
     def enum(self):
-        utils.log("The enum() method is not implemented in %s" % self.module_dir)
+        utils.log("The enum() method is not implemented in %s" % self.module_dir, 'warning')
 
     def brute(self):
-        utils.log("The brute() method is not implemented in %s" % self.module_dir)
+        utils.log("The brute() method is not implemented in %s" % self.module_dir, 'warning')

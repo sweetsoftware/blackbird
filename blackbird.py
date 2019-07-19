@@ -5,6 +5,7 @@ import os
 import traceback
 import glob
 import shutil
+import signal
 
 from blackbird import core
 from blackbird import utils
@@ -103,7 +104,7 @@ __________.__                 __   ___.   .__           .___
         installed_modules = utils.get_module_list()
         for i in config.MODULES:
             if i not in installed_modules:
-                utils.log('Module not found: %s' % i, 'info')
+                utils.log('Module not found: %s' % i, 'error')
                 exit(1)
     if args.nmap_import:
         nmap_xml_files = []
@@ -113,35 +114,36 @@ __________.__                 __   ___.   .__           .___
 
     # Custom dictionnaries
     if args.userlist and not args.passlist or args.passlist and not args.userlist:
-        utils.log('userlist and password list should be used together.')
+        utils.log('userlist and password list should be used together', 'error')
         exit(1)
     if args.userlist:
         if os.path.exists(args.userlist) and os.path.isfile(args.userlist):
             config.CUSTOM_USER_LIST = args.userlist
         else:
-            utils.log('No such file : %s' % args.userlist)
+            utils.log('No such file : %s' % args.userlist, 'error')
             exit(1)
         if os.path.exists(args.passlist) and os.path.isfile(args.passlist):
             config.CUSTOM_PASS_LIST = args.passlist
         else:
-            utils.log('No such file : %s' % args.passlist)
+            utils.log('No such file : %s' % args.passlist, 'error')
             exit(1)
     if args.userpasslist:
         if os.path.exists(args.userpasslist) and os.path.isfile(args.userpasslist):
             config.CUSTOM_USERPASS_LIST = args.userpasslist
         else:
-            utils.log('No such file : %s' % args.userpasslist)
+            utils.log('No such file : %s' % args.userpasslist, 'error')
             exit(1)
     if config.ONLY_CUSTOM_BRUTE and not (args.userlist or args.userpasslist):
-        utils.log('No custom wordlist given for bruteforce.', 'info')
+        utils.log('No custom wordlist given for bruteforce', 'error')
         exit(1)
 
     # Check options
     if not args.target and (args.sweep or args.no_sweep):
-        utils.log('Targets (-t) is needed for sweep scan.', 'info')
+        utils.log('Targets (-t) is needed for sweep scan', 'error')
         exit(1)
     if args.target and not (args.sweep or args.no_sweep):
-        utils.log('Targets options (-t) is only processed when a new --sweep or --no-sweep scan is performed. Otherwise, the already existing sweep.xml file in the output dir is used to list targets.', 'info')
+        utils.log('Targets options (-t) is only processed when a new --sweep or --no-sweep scan is performed. Otherwise,'
+                  ' the already existing sweep.xml file in the output dir is used to list targets.', 'error')
         exit(1)
 
     # Load targets
@@ -156,6 +158,8 @@ __________.__                 __   ___.   .__           .___
                     f.write(i + "\n")
         config.TARGET_FILE = target_file
         utils.log("Parsed targets : " + targets, 'info')
+
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
 
     output_path = config.OUTPUT_PATH
     # Do sweep scan or import all targets
@@ -178,5 +182,5 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as exc:
-        utils.log('Unhandled exception : %s' % exc)
+        utils.log('Unhandled exception : %s' % exc, 'error')
         utils.log(traceback.format_exc())

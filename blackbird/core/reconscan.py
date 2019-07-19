@@ -58,11 +58,11 @@ def get_target_modules(target, output_dir):
     output_path = os.path.join(output_dir, target)
     nmap_xml_file = os.path.join(output_path, "port-scan.xml")
     if not os.path.exists(nmap_xml_file):
-        utils.log("No TCP scan file : %s Either no port is open or you didn't perform port scan (--scan)" % nmap_xml_file, 'info')
+        utils.log("No TCP scan file : %s Either no port is open or you didn't perform port scan (--scan)" % nmap_xml_file, 'error')
         return
     nmap_results = utils.parse_nmap_xml(nmap_xml_file)
     if not nmap_results:
-        utils.log("No open ports on %s, skipping..." % target, "info")
+        utils.log("No open ports on %s, skipping..." % target, "error")
         return
   
     for port in nmap_results[target]['tcp']:
@@ -97,10 +97,10 @@ def interrupt_menu(*args):
         try:
             item = int(item)
             if item not in range(len(running_jobs)) and item != -1:
-                utils.log("Invalid choice")
+                utils.log("Invalid choice", 'error')
                 break
         except:
-            utils.log("Invalid choice")
+            utils.log("Invalid choice", 'error')
             break
     # No error in input, proceed to kill processes
     else:
@@ -109,18 +109,18 @@ def interrupt_menu(*args):
             choice = int(choice)
             if choice >= 0:
                 proc_to_kill = running_jobs[choice]
-                utils.log("Killing pid %s" % proc_to_kill.pid)
+                utils.log("Killing pid %s" % proc_to_kill.pid, 'warning')
                 proc_to_kill.stop()
                 killed_procs.append(proc_to_kill)
             elif choice == -1:
-                utils.log("Killing all remaining jobs")
+                utils.log("Killing all remaining jobs", 'warning')
                 for i in running_jobs:
                     i.stop()
                 global remaining_jobs
                 remaining_jobs = []
         for proc in killed_procs:
             running_jobs.remove(proc)
-    utils.log("Resuming jobs...")
+    utils.log("Resuming jobs...", 'info')
     for i in running_jobs:
         i.resume()
 
@@ -136,7 +136,7 @@ def get_user_input():
 def run(output_dir):
     sweep_file = os.path.join(output_dir, 'sweep.xml')
     if not os.path.exists(sweep_file):
-        utils.log("Could not parse host list... have you performed a ping sweep first (--sweep) or specified the --no-sweep flag ? ", 'info')
+        utils.log("Could not parse host list... have you performed a ping sweep first (--sweep) or specified the --no-sweep flag ? ", 'error')
         exit(1)
 
     enum_jobs = []
@@ -164,7 +164,7 @@ def run(output_dir):
             if not job.is_alive():
                 running_jobs.remove(job)
                 continue
-        if len(running_jobs) <= config.MAX_JOBS and remaining_jobs:
+        if len(running_jobs) < config.MAX_JOBS and remaining_jobs:
             next_job = remaining_jobs[0]
             running_jobs.append(next_job)
             next_job.start()

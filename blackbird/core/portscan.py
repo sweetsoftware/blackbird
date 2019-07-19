@@ -29,7 +29,7 @@ def _port_scan(target, output_dir):
     utils.merge_nmap_files([tcp_scan, udp_scan], port_scan_file)
     results = utils.parse_nmap_xml(port_scan_file)
     if not results:
-        utils.log("No open ports on %s, deleting directory..." % target, "info")
+        utils.log("No open ports on %s, deleting directory..." % target, "error")
         shutil.rmtree(output_path)
 
 
@@ -38,7 +38,7 @@ def run(output_dir):
 
     sweep_file = os.path.join(output_dir, 'sweep.xml')
     if not os.path.exists(sweep_file):
-        utils.log("Could not parse host list... have you performed a ping sweep first (--sweep) or specified the --no-sweep flag ? ", 'info')
+        utils.log("Could not parse host list... have you performed a ping sweep first (--sweep) or specified the --no-sweep flag ? ", 'error')
         exit(1)
     for target in utils.get_host_list(sweep_file):
         scan_p = (target, output_dir)

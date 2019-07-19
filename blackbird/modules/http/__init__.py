@@ -57,7 +57,7 @@ class ModuleInstance(Module):
         # Screenshot web page
         cmd = "chromium --ignore-certificate-errors --disable-gpu --headless --no-sandbox --window-size=1920,1080 "\
             "--screenshot='%s' '%s' 2>/dev/null" % (self.get_output_path("screenshot.png"), self.url)
-        utils.run_cmd(cmd)
+        utils.run_cmd(cmd, timeout=15)
 
 
     def do_bruteforce(self, outfile, user_list=None, pass_list=None, userpass_list=None):
@@ -74,7 +74,8 @@ class ModuleInstance(Module):
 
     def brute(self):
         # Bruteforce URLs
-        cmd = "wfuzz -Z -w '%s' -c -u '%s/FUZZ' -L --hc 404 -f '%s,html'|tee '%s'" % (self.get_resource_path('urls.txt'),
+        cmd = "wfuzz -Z -w '%s' -c -u '%s/FUZZ' -L --hc 404,400 --ss '(.+)'\
+                -f '%s,html'|tee '%s'" % (self.get_resource_path('urls.txt'),
             self.url, self.get_output_path('wfuzz.html'), self.get_output_path('wfuzz.txt'))
         utils.run_cmd(cmd)
 
