@@ -58,11 +58,11 @@ def get_target_modules(target, output_dir):
     output_path = os.path.join(output_dir, target)
     nmap_xml_file = os.path.join(output_path, "port-scan.xml")
     if not os.path.exists(nmap_xml_file):
-        utils.log("No TCP scan file : %s Either no port is open or you didn't perform port scan (--scan)" % nmap_xml_file, 'error')
+        utils.log("No TCP scan file : %s Either no port is open or you didn't perform port scan (--scan)" % nmap_xml_file, 'warning')
         return
     nmap_results = utils.parse_nmap_xml(nmap_xml_file)
     if not nmap_results:
-        utils.log("No open ports on %s, skipping..." % target, "error")
+        utils.log("No open ports on %s, skipping..." % target, "warning")
         return
   
     for port in nmap_results[target]['tcp']:

@@ -11,12 +11,14 @@ def _port_scan(target, output_dir):
     output_path = os.path.join(output_dir, target)
     if not os.path.exists(output_path):
         os.mkdir(output_path)
-    cmd = 'nmap -v -sV -sT -Pn -n --open -oA %s %s' % (output_path + '/ports-tcp', target)
+    # TCP scan
+    cmd = 'nmap -v -sV --version-intensity 5 -sT -Pn -n --open -oA %s %s' % (output_path + '/ports-tcp', target)
     if config.FULL_SCAN:
         cmd += " -p- -T4"
     else:
-        cmd += " -T4"
+        cmd += " -T5"
     utils.run_cmd(cmd)
+    # UDP scan
     cmd = 'nmap -v -sV --defeat-icmp-ratelimit -Pn -sU -T4 -n --open -oA %s %s' % (output_path + '/ports-udp', target)
     if config.FULL_SCAN:
         cmd += " "
@@ -44,7 +46,7 @@ def run(output_dir):
         scan_p = (target, output_dir)
         jobs.append(scan_p)
 
-    pool = multiprocessing.Pool(50)
+    pool = multiprocessing.Pool(10)
     pool.starmap(_port_scan, jobs)
     pool.close()
     pool.join()
