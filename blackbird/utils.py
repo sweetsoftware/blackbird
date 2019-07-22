@@ -97,17 +97,20 @@ def parse_nmap_xml(filename):
 def find_services(nmap_file, search_string):
     host_info = parse_nmap_xml(nmap_file)
     matching_services = []
+    search_string = search_string.lower()
     for host in host_info:
         for proto in host_info[host]:
             for port in host_info[host][proto]:
                 service_info = host_info[host][proto][port]
                 if not service_info:
                     continue
-                if search_string in service_info['name'] or \
-                    search_string in service_info['product'] or \
-                        search_string in service_info['version'] or \
-                        search_string in service_info['extrainfo']:
-                            service = "%s:%s" % (host, port)
+                if search_string in service_info['name'].lower() or \
+                    search_string in service_info['product'].lower() or \
+                        search_string in service_info['version'].lower() or \
+                        search_string in service_info['extrainfo'].lower() or \
+                        search_string == port:
+                            service = "%s:%s - %s" % (host, port, " ".join([service_info['name'],service_info['product'],
+                                                      service_info['version'], service_info['extrainfo']]))
                             matching_services.append(service)
     return matching_services
 
