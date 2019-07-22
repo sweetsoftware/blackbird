@@ -124,6 +124,7 @@ def interrupt_menu(*args):
     for i in running_jobs:
         i.resume()
 
+
 def get_user_input():
     while sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
         line = sys.stdin.readline()

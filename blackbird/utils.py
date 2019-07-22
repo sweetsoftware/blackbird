@@ -43,8 +43,7 @@ def run_cmd(cmdline, timeout=None, shell=True, wdir=None):
                 sys.stdout.write(output)
                 proc_output += output
         log(termcolor.colored('Command finished: ', 'green') + cmdline +
-            '\n\n' + \
-                           proc_output)
+            '\n\n' + proc_output)
         return proc_output
     except subprocess.TimeoutExpired:
         proc.kill()
@@ -56,15 +55,18 @@ def log(log_str, log_type=''):
     if log_type == 'info':
         logging.info(termcolor.colored('[*] ' + log_str + "\n", 'green'))
     elif log_type == 'error':
-        logging.critical(termcolor.colored('[*] ' + log_str + "\n", 'red'))
+        logging.critical(termcolor.colored('[!] ' + log_str + "\n", 'red'))
     elif log_type == 'warning':
-        logging.warning(termcolor.colored('[*] ' + log_str + "\n", 'yellow'))
+        logging.warning(termcolor.colored('[!] ' + log_str + "\n", 'yellow'))
     else:
         logging.info(log_str)
 
 
 def parse_nmap_xml(filename):
     host_info = dict()
+    if not os.path.exists(filename):
+        log("%s nmap XML not found" % filename, 'error')
+        exit(1)
     xml_file = open(filename, 'r')
     soup = BeautifulSoup(xml_file, 'lxml')
     for host in soup.find_all('host'):
@@ -90,6 +92,24 @@ def parse_nmap_xml(filename):
                     host_info[host_addr][port_proto][portid]['tunnel'] = service.get('tunnel') or ''
                     host_info[host_addr][port_proto][portid]['servicefp'] = service.get('servicefp') or ''
     return host_info
+
+
+def find_services(nmap_file, search_string):
+    host_info = parse_nmap_xml(nmap_file)
+    matching_services = []
+    for host in host_info:
+        for proto in host_info[host]:
+            for port in host_info[host][proto]:
+                service_info = host_info[host][proto][port]
+                if not service_info:
+                    continue
+                if search_string in service_info['name'] or \
+                    search_string in service_info['product'] or \
+                        search_string in service_info['version'] or \
+                        search_string in service_info['extrainfo']:
+                            service = "%s:%s" % (host, port)
+                            matching_services.append(service)
+    return matching_services
 
 
 def merge_nmap_files(file_list, output_file):
