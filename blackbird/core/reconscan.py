@@ -66,6 +66,8 @@ def get_target_modules(target, output_dir):
         return
   
     for port in nmap_results[target]['tcp']:
+        if not nmap_results[target]['tcp'][port]:
+            continue
         service = nmap_results[target]['tcp'][port]['name']
         output_dir = os.path.join(output_path, 'tcp', port + "-" + service)
         if not os.path.exists(output_dir):
@@ -79,6 +81,8 @@ def get_target_modules(target, output_dir):
 
 
 def interrupt_menu(*args):
+    global remaining_jobs
+    global running_jobs
     for i in running_jobs:
         i.suspend()
     utils.log("Invoking interactive menu...", "info")
@@ -116,8 +120,9 @@ def interrupt_menu(*args):
                 utils.log("Killing all remaining jobs", 'warning')
                 for i in running_jobs:
                     i.stop()
-                global remaining_jobs
                 remaining_jobs = []
+                running_jobs = []
+                return
         for proc in killed_procs:
             running_jobs.remove(proc)
     utils.log("Resuming jobs...", 'info')
@@ -135,6 +140,9 @@ def get_user_input():
 
 
 def run(output_dir):
+    global remaining_jobs
+    global running_jobs
+    utils.log('Initiating reconscan on targets', 'info')
     sweep_file = os.path.join(output_dir, 'sweep.xml')
     if not os.path.exists(sweep_file):
         utils.log("Could not parse host list... have you performed a ping sweep first (--sweep) or specified the --no-sweep flag ? ", 'error')
@@ -153,6 +161,7 @@ def run(output_dir):
                 if config.BRUTE:
                     proc = ReconProcess(module.brute)
                     brute_jobs.append(proc)
+
     remaining_jobs = enum_jobs + brute_jobs
 
     while remaining_jobs or running_jobs:

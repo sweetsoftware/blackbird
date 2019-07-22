@@ -12,14 +12,14 @@ def _port_scan(target, output_dir):
     if not os.path.exists(output_path):
         os.mkdir(output_path)
     # TCP scan
-    cmd = 'nmap -v -sV --version-intensity 5 -sT -Pn -n --open -oA %s %s' % (output_path + '/ports-tcp', target)
+    cmd = 'nmap -v -sV --version-intensity 5 -sT -Pn -n --open -oX %s %s' % (output_path + '/ports-tcp.xml', target)
     if config.FULL_SCAN:
         cmd += " -p- -T4"
     else:
         cmd += " -T5"
     utils.run_cmd(cmd)
     # UDP scan
-    cmd = 'nmap -v -sV --defeat-icmp-ratelimit -Pn -sU -T4 -n --open -oA %s %s' % (output_path + '/ports-udp', target)
+    cmd = 'nmap -v -sV --defeat-icmp-ratelimit -Pn -sU -T4 -n --open -oX %s %s' % (output_path + '/ports-udp.xml', target)
     if config.FULL_SCAN:
         cmd += " "
     else:
@@ -29,6 +29,8 @@ def _port_scan(target, output_dir):
     udp_scan = os.path.join(output_path, "ports-udp.xml")
     port_scan_file = os.path.join(output_path, "port-scan.xml")
     utils.merge_nmap_files([tcp_scan, udp_scan], port_scan_file)
+    os.remove(tcp_scan)
+    os.remove(udp_scan)
     results = utils.parse_nmap_xml(port_scan_file)
     if not results:
         utils.log("No open ports on %s, deleting directory..." % target, "error")
@@ -37,7 +39,7 @@ def _port_scan(target, output_dir):
 
 def run(output_dir):
     jobs = []
-
+    utils.log('Initiating port scan on targets','info')
     sweep_file = os.path.join(output_dir, 'sweep.xml')
     if not os.path.exists(sweep_file):
         utils.log("Could not parse host list... have you performed a ping sweep first (--sweep) or specified the --no-sweep flag ? ", 'error')

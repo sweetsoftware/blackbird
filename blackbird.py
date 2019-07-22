@@ -7,13 +7,14 @@ import glob
 import shutil
 import signal
 
+import termcolor
+
 from blackbird import core
 from blackbird import utils
 from blackbird import config
 
 
-def main():
-    print(r"""
+LOGO = r"""
 __________.__                 __   ___.   .__           .___
 \______   \  | _____    ____ |  | _\_ |__ |__|______  __| _/
  |    |  _/  | \__  \ _/ ___\|  |/ /| __ \|  \_  __ \/ __ | 
@@ -48,11 +49,14 @@ __________.__                 __   ___.   .__           .___
           `\.   ./
              `\/
 (Artwork by Carl Pilcher)
-    """)
-    parser = argparse.ArgumentParser(description="Network reconnaissance and enumeration tool.")
+"""
+
+def main():
+    parser = argparse.ArgumentParser(description="Network reconnaissance and enumeration tool.",
+                                     formatter_class=argparse.RawDescriptionHelpFormatter,
+                                     epilog=LOGO)
     parser.add_argument('-t', '--target', help='Target (nmap format) or file with targets (one per line)')
     parser.add_argument('-w', '--working-dir', help='Working directory (created if does not exist)')
-    parser.add_argument('--sweep', help='Ping sweep targets', action='store_true')
     parser.add_argument('--no-sweep', help='Treat all hosts as alive (no ping sweep)', action='store_true')
     parser.add_argument('-U', '--userlist', help='Custom userlist to try on all services')
     parser.add_argument('-P', '--passlist', help='Custom password list to try on all services')
@@ -96,8 +100,7 @@ __________.__                 __   ___.   .__           .___
         config.OUTPUT_PATH = os.path.join(os.getcwd(), args.working_dir)
     if not os.path.exists(config.OUTPUT_PATH):
         os.makedirs(config.OUTPUT_PATH)
-        utils.log('Created output directory %s.' % config.OUTPUT_PATH, 'info')
-    config.SWEEP = args.sweep
+        utils.log('Created output directory %s' % config.OUTPUT_PATH, 'info')
     config.MODULES = utils.get_module_list()
     config.ONLY_CUSTOM_BRUTE = args.only_custom_brute
 
@@ -107,6 +110,8 @@ __________.__                 __   ___.   .__           .___
         if not search_result:
             print('No results found')
         else:
+            print(termcolor.colored('%s services:' % args.search, 'green'))
+            print('=' * 30)
             for result in search_result:
                 print(result)
         exit(0)
@@ -152,15 +157,6 @@ __________.__                 __   ___.   .__           .___
         utils.log('No custom wordlist given for bruteforce', 'error')
         exit(1)
 
-    # Check options
-    if not args.target and (args.sweep or args.no_sweep):
-        utils.log('Targets (-t) is needed for sweep scan', 'error')
-        exit(1)
-    if args.target and not (args.sweep or args.no_sweep):
-        utils.log('Targets options (-t) is only processed when a new --sweep or --no-sweep scan is performed. Otherwise,'
-                  ' the already existing sweep.xml file in the output dir is used to list targets.', 'error')
-        exit(1)
-
     # Load targets file
     if args.target:
         target_file = os.path.join(config.OUTPUT_PATH, 'targets.txt')
@@ -178,12 +174,20 @@ __________.__                 __   ___.   .__           .___
     signal.signal(signal.SIGINT, signal.SIG_IGN)
 
     output_path = config.OUTPUT_PATH
-    # Do sweep scan or import all targets
-    if config.NOSWEEP:
-        core.nosweep.run(config.TARGET_FILE, output_path)
-    elif config.SWEEP:
-        core.sweep.run(config.TARGET_FILE, output_path)
-
+    if config.TARGET_FILE:
+        # Do sweep scan or import all targets (no sweep)
+        if config.NOSWEEP:
+            core.nosweep.run(config.TARGET_FILE, output_path)
+        else:
+            core.sweep.run(config.TARGET_FILE, output_path)
+    else:
+        nmap_summary = os.path.join(output_path, "nmap_summary.xml")
+        if os.path.exists(nmap_summary) and os.path.isfile(nmap_summary):
+            shutil.copyfile(nmap_summary, os.path.join(output_path, 'sweep.xml'))
+            utils.log('Targeting all hosts discovered so far', 'info')
+        else:
+            utils.log('Provide targets (-t) to scan at least for the first scan', 'error')
+            exit(1)
     if config.SCAN:
         # Do port scan
         core.portscan.run(output_path)
