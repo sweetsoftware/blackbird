@@ -65,6 +65,8 @@ __________.__                 __   ___.   .__           .___
     parser.add_argument('-M', '--modules', help='Run only selected modules (for --enum and --brute operations)')
     parser.add_argument('--only-custom-brute', action='store_true',
                         help='--brute will run only custom wordlists on bruteforce attempts')
+    parser.add_argument('--search', help='Find hosts running a particular '
+                                         'service, e.g "ldap", "Apache", ...')
     parser.add_argument('--list-modules', action='store_true',
                         help='List available modules')
     args = parser.parse_args()
@@ -79,7 +81,7 @@ __________.__                 __   ___.   .__           .___
     if not args.working_dir:
         parser.print_help()
         print("")
-        print("-w/--working-dir parameter missing")
+        utils.log("-w/--working-dir parameter missing", 'error')
         exit(1)
 
     # Scan configuration
@@ -99,6 +101,17 @@ __________.__                 __   ___.   .__           .___
     config.MODULES = utils.get_module_list()
     config.ONLY_CUSTOM_BRUTE = args.only_custom_brute
 
+    if args.search:
+        nmap_path = os.path.join(config.OUTPUT_PATH, 'nmap_summary.xml')
+        search_result = utils.find_services(nmap_path, args.search)
+        if not search_result:
+            print('No results found')
+        else:
+            for result in search_result:
+                print(result)
+        exit(0)
+
+    # Module selection
     if args.modules:
         config.MODULES=args.modules.split(',')
         installed_modules = utils.get_module_list()
@@ -106,6 +119,8 @@ __________.__                 __   ___.   .__           .___
             if i not in installed_modules:
                 utils.log('Module not found: %s' % i, 'error')
                 exit(1)
+
+    # Import nmap file
     if args.nmap_import:
         nmap_xml_files = []
         for path in args.nmap_import.split(','):
@@ -146,7 +161,7 @@ __________.__                 __   ___.   .__           .___
                   ' the already existing sweep.xml file in the output dir is used to list targets.', 'error')
         exit(1)
 
-    # Load targets
+    # Load targets file
     if args.target:
         target_file = os.path.join(config.OUTPUT_PATH, 'targets.txt')
         targets = args.target
@@ -159,6 +174,7 @@ __________.__                 __   ___.   .__           .___
         config.TARGET_FILE = target_file
         utils.log("Parsed targets : " + targets, 'info')
 
+    # Ignore SIGINT
     signal.signal(signal.SIGINT, signal.SIG_IGN)
 
     output_path = config.OUTPUT_PATH
@@ -177,6 +193,7 @@ __________.__                 __   ___.   .__           .___
         core.reconscan.run(output_path)
 
     utils.log('Blackbird done.', 'info')
+
 
 if __name__ == "__main__":
     try:
