@@ -12,14 +12,14 @@ def _port_scan(target, output_dir):
     if not os.path.exists(output_path):
         os.mkdir(output_path)
     # TCP scan
-    cmd = 'nmap -v -sV --version-intensity 9 -sT -Pn -n --open -oX %s %s' % (output_path + '/ports-tcp.xml', target)
+    cmd = 'nmap -v -sV --version-intensity 9 -sT -Pn --open -oX %s %s' % (output_path + '/ports-tcp.xml', target)
     if config.FULL_SCAN:
         cmd += " -p- -T4"
     else:
         cmd += " -T5"
     utils.run_cmd(cmd)
     # UDP scan
-    cmd = 'nmap -v -sV --defeat-icmp-ratelimit -Pn -sU -T4 -n --open -oX %s %s' % (output_path + '/ports-udp.xml', target)
+    cmd = 'nmap -v -sV --defeat-icmp-ratelimit -Pn -sU -T4 --open -oX %s %s' % (output_path + '/ports-udp.xml', target)
     if config.FULL_SCAN:
         cmd += " "
     else:
