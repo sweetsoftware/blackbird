@@ -12,7 +12,7 @@ def _port_scan(target, output_dir):
     if not os.path.exists(output_path):
         os.mkdir(output_path)
     # TCP scan
-    cmd = 'nmap -v -sV --version-intensity 9 -sT -Pn --open -oX %s %s' % (output_path + '/ports-tcp.xml', target)
+    cmd = 'nmap -v -sV -sT -Pn --open -oX %s %s' % (output_path + '/ports-tcp.xml', target)
     if config.FULL_SCAN:
         cmd += " -p- -T4"
     else:
@@ -33,7 +33,7 @@ def _port_scan(target, output_dir):
     os.remove(udp_scan)
     results = utils.parse_nmap_xml(port_scan_file)
     if not results:
-        utils.log("No open ports on %s, deleting directory..." % target, "error")
+        utils.log("No open ports on %s, deleting directory..." % target, "warning")
         shutil.rmtree(output_path)
 
 
@@ -53,4 +53,4 @@ def run(output_dir):
     pool.close()
     pool.join()
     scan_files = glob.glob(os.path.join(output_dir, '*', '*.xml'))
-    utils.merge_nmap_files(scan_files, os.path.join(output_dir, 'nmap_summary.xml'))
+    utils.update_nmap_summary(scan_files)

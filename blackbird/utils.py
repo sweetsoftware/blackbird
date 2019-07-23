@@ -182,10 +182,19 @@ def import_nmap_scans(nmap_xml_files, output_dir):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     sweep_file = os.path.join(output_dir, 'sweep.xml')
-    merge_nmap_files(nmap_xml_files, os.path.join(output_dir, 'sweep.xml'))
-    shutil.copyfile(sweep_file, os.path.join(output_dir, 'nmap_summary.xml'))
+    merge_nmap_files(nmap_xml_files, sweep_file)
+    update_nmap_summary([sweep_file])
     split_nmap_file(sweep_file, output_dir)
     log("Done importing into %s" % output_dir, 'info')
+
+
+def update_nmap_summary(xml_files):
+    nmap_summary_file = os.path.join(config.OUTPUT_PATH, 'nmap_summary.xml')
+    if os.path.exists(nmap_summary_file):
+        old_nmap_summary_file =  nmap_summary_file + ".old"
+        shutil.copyfile(nmap_summary_file, old_nmap_summary_file)
+        xml_files.append(old_nmap_summary_file)
+    merge_nmap_files(xml_files, nmap_summary_file)
 
 
 def get_host_list(nmap_xml):

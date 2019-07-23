@@ -50,13 +50,13 @@ class ModuleInstance(Module):
         utils.log('Starting HTTP enumeration against %s' % (self.url), 'info')
 
         # Fingerprint web technologies
-        cmd = "whatweb --color=always --user-agent '%s' --log-brief=%s %s" % \
+        cmd = "whatweb --color=never --user-agent '%s' --log-brief=%s %s" % \
               (self.user_agent, self.get_output_path('whatweb.txt'), self.url)
         utils.run_cmd(cmd)
 
         # Screenshot web page
         cmd = "chromium --ignore-certificate-errors --disable-gpu --headless --no-sandbox --window-size=1920,1080 "\
-            "--screenshot='%s' '%s' 2>/dev/null" % (self.get_output_path("screenshot.png"), self.url)
+            "--screenshot='%s' '%s' 2>/dev/null" % (self.get_output_path("sc-%s.png" % (self.url.replace('/', ''))), self.url)
         utils.run_cmd(cmd, timeout=15)
 
 
