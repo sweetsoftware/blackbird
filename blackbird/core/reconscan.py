@@ -69,13 +69,13 @@ def get_target_modules(target, output_dir):
         if not nmap_results[target]['tcp'][port]:
             continue
         service = nmap_results[target]['tcp'][port]['name']
-        output_dir = os.path.join(output_path, 'tcp', port + "-" + service)
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
+        module_output_dir = os.path.join(output_path, 'tcp-' + port + "-" + service)
         for module_name in config.MODULES:
             module_obj = getattr(globals()['modules'], module_name)
-            module_instance = module_obj.ModuleInstance(target, port, service,  nmap_results[target]['tcp'][port], output_dir, 'tcp')
+            module_instance = module_obj.ModuleInstance(target, port, service,  nmap_results[target]['tcp'][port], module_output_dir, 'tcp')
             if module_instance.can_run():
+                if not os.path.exists(module_output_dir):
+                    os.makedirs(module_output_dir)
                 jobs.append(module_instance)
     return jobs
 

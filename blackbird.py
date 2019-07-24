@@ -106,14 +106,10 @@ def main():
 
     if args.search:
         nmap_path = os.path.join(config.OUTPUT_PATH, 'nmap_summary.xml')
-        search_result = utils.find_services(nmap_path, args.search)
-        if not search_result:
-            print('No results found')
-        else:
-            print(termcolor.colored('%s services:' % args.search, 'green'))
-            print('=' * 30)
-            for result in search_result:
-                print(result)
+        print(termcolor.colored('%s services:' % args.search, 'green'))
+        print('=' * 30)
+        for result in utils.find_services(nmap_path, args.search):
+            print(result)
         exit(0)
 
     # Module selection

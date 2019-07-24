@@ -15,6 +15,8 @@ class ModuleInstance(Module):
         self.tls = self.is_tls(service, nmap_results)
         self.url = self.get_url(target, port, self.tls)
         self.user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:67.0) Gecko/20100101 Firefox/67.0'
+        self.hostnames = utils.get_hostnames(self.target)
+
 
     def is_tls(self, service, nmap_results):
         tls = False
@@ -46,18 +48,32 @@ class ModuleInstance(Module):
         return False
 
 
+    def whatweb(self, hostname):
+        url = self.get_url(hostname, self.port, self.tls)
+        # Fingerprint web technologies
+        cmd = "whatweb --color=never --user-agent '%s' --log-brief=%s %s" % \
+              (self.user_agent, self.get_output_path('whatweb-%s.txt' % hostname), url)
+        utils.run_cmd(cmd)
+
+
+    def screenshot(self, hostname):
+        url = self.get_url(hostname, self.port, self.tls)
+        # Screenshot web page
+        cmd = "chromium --ignore-certificate-errors --disable-gpu --headless --no-sandbox --window-size=1920,1080 "\
+            "--screenshot='%s' '%s' 2>/dev/null" % (self.get_output_path("sc-%s.png" % (self.url.replace('/', ''))), url)
+        utils.run_cmd(cmd, timeout=60)
+
+
     def enum(self):
         utils.log('Starting HTTP enumeration against %s' % (self.url), 'info')
 
-        # Fingerprint web technologies
-        cmd = "whatweb --color=never --user-agent '%s' --log-brief=%s %s" % \
-              (self.user_agent, self.get_output_path('whatweb.txt'), self.url)
-        utils.run_cmd(cmd)
+        self.whatweb(self.target)
+        self.screenshot(self.target)
 
-        # Screenshot web page
-        cmd = "chromium --ignore-certificate-errors --disable-gpu --headless --no-sandbox --window-size=1920,1080 "\
-            "--screenshot='%s' '%s' 2>/dev/null" % (self.get_output_path("sc-%s.png" % (self.url.replace('/', ''))), self.url)
-        utils.run_cmd(cmd, timeout=15)
+        if self.hostnames:
+            for hostname in self.hostnames:
+                self.whatweb(hostname)
+                self.screenshot(hostname)
 
 
     def do_bruteforce(self, outfile, user_list=None, pass_list=None, userpass_list=None):

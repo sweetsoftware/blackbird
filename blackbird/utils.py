@@ -19,7 +19,7 @@ logging.getLogger().addHandler(logging.FileHandler(filename='output.log', mode='
 
 
 def run_cmd(cmdline, timeout=None, shell=True, wdir=None):
-    log("Running command : %s" % cmdline)
+    log(termcolor.colored("Running command : ", 'green') + "%s" % cmdline)
     try:
         proc = subprocess.Popen(cmdline, shell=shell, cwd=wdir,
                                 stdout=subprocess.PIPE,
@@ -42,8 +42,7 @@ def run_cmd(cmdline, timeout=None, shell=True, wdir=None):
                 output = output.decode('utf8')
                 sys.stdout.write(output)
                 proc_output += output
-        log(termcolor.colored('Command finished: ', 'green') + cmdline +
-            '\n\n' + proc_output)
+        log(termcolor.colored('Command finished: ', 'green') + cmdline)
         return proc_output
     except subprocess.TimeoutExpired:
         proc.kill()
@@ -71,9 +70,6 @@ def parse_nmap_xml(filename):
     soup = BeautifulSoup(xml_file, 'lxml')
     for host in soup.find_all('host'):
         host_addr = host.address['addr']
-        host_domains = host.find_all('hostname')
-        if host_domains:
-            host_addr = host_domains[0]['name']
         if host_addr not in host_info:
             host_info[host_addr] = dict()
             host_info[host_addr]["tcp"] = dict()
@@ -94,6 +90,27 @@ def parse_nmap_xml(filename):
     return host_info
 
 
+def get_nmap_hostnames(host):
+    filename = os.path.join(config.OUTPUT_PATH, host, 'port-scan.xml')
+    if not os.path.exists(filename):
+        log("%s nmap XML not found" % filename, 'error')
+        return
+    xml_file = open(filename, 'r')
+    soup = BeautifulSoup(xml_file, 'lxml')
+    host_names =[]
+    for host in soup.find_all('host'):
+        host_domains = host.find_all('hostname')
+        for domain in host_domains:
+            host_names.append(domain['name'])
+    # Remove duplicates
+    host_names = list(dict.fromkeys(host_names))
+    return host_names
+
+
+def get_hostnames(host):
+    return get_nmap_hostnames(host)
+
+
 def find_services(nmap_file, search_string):
     host_info = parse_nmap_xml(nmap_file)
     matching_services = []
@@ -108,11 +125,11 @@ def find_services(nmap_file, search_string):
                     search_string in service_info['product'].lower() or \
                         search_string in service_info['version'].lower() or \
                         search_string in service_info['extrainfo'].lower() or \
+                        search_string in service_info['servicefp'].lower() or \
                         search_string == port:
                             service = "%s:%s - %s" % (host, port, " ".join([service_info['name'],service_info['product'],
                                                       service_info['version'], service_info['extrainfo']]))
-                            matching_services.append(service)
-    return matching_services
+                            yield service
 
 
 def merge_nmap_files(file_list, output_file):
@@ -150,9 +167,6 @@ def split_nmap_file(nmap_xml_file, output_dir):
     soup = BeautifulSoup(xml_file, 'lxml')
     for host in soup.find_all('host'):
         host_addr = host.address['addr']
-        host_domains = host.find_all('hostname')
-        if host_domains:
-            host_addr = host_domains[0]['name']
         log('Extracting data for %s' % host_addr, 'info')
         host_dir = os.path.join(output_dir, host_addr)
         if not os.path.exists(host_dir):
@@ -178,9 +192,6 @@ def import_nmap_scans(nmap_xml_files, output_dir):
         if not os.path.exists(xml_file):
             log("File does not exist: %s" % xml_file, 'error')
             return
-    log("Creating output dir %s" % output_dir, 'info')
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
     sweep_file = os.path.join(output_dir, 'sweep.xml')
     merge_nmap_files(nmap_xml_files, sweep_file)
     update_nmap_summary([sweep_file])

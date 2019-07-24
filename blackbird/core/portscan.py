@@ -19,7 +19,7 @@ def _port_scan(target, output_dir):
         cmd += " -T5"
     utils.run_cmd(cmd)
     # UDP scan
-    cmd = 'nmap -v -sV --defeat-icmp-ratelimit -Pn -sU -T4 --open -oX %s %s' % (output_path + '/ports-udp.xml', target)
+    cmd = 'nmap -v -n -sV --defeat-icmp-ratelimit -Pn -sU -T4 --open -oX %s %s' % (output_path + '/ports-udp.xml', target)
     if config.FULL_SCAN:
         cmd += " "
     else:
