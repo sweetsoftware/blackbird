@@ -82,15 +82,15 @@ class ModuleInstance(Module):
         else:
             method = 'http-get'
         if user_list and pass_list:
-            cmd = "hydra -L %s -P %s -I -e nsr -f -o %s -s %s %s %s /" % (user_list, pass_list, outfile, self.port, self.target, method)
+            cmd = "hydra -V -L %s -P %s -I -e nsr -f -o %s -s %s %s %s /" % (user_list, pass_list, outfile, self.port, self.target, method)
         elif userpass_list:
-            cmd = "hydra -C %s -I -f -o %s -s %s %s %s /" % (userpass_list, outfile, self.port, self.target, method)
+            cmd = "hydra -V -C %s -I -f -o %s -s %s %s %s /" % (userpass_list, outfile, self.port, self.target, method)
         utils.run_cmd(cmd, wdir=self.output_dir)
 
 
     def brute(self):
         # Bruteforce URLs
-        cmd = "wfuzz -Z -w '%s' -c -u '%s/FUZZ' -L --hc 404,400 --ss '(.+)'\
+        cmd = "wfuzz -w '%s' -c -u '%s/FUZZ' -L --hc XXX\
                 -f '%s,html'|tee '%s'" % (self.get_resource_path('urls.txt'),
             self.url, self.get_output_path('wfuzz.html'), self.get_output_path('wfuzz.txt'))
         utils.run_cmd(cmd)
