@@ -90,10 +90,11 @@ class ModuleInstance(Module):
 
     def brute(self):
         # Bruteforce URLs
-        cmd = "wfuzz -w '%s' -c -u '%s/FUZZ' -L --hc XXX\
+        cmd = "wfuzz -w '%s' -c -u '%s/FUZZ' -L --hc 400,403,404,405,500,501,502,503 \
                 -f '%s,html'|tee '%s'" % (self.get_resource_path('urls.txt'),
             self.url, self.get_output_path('wfuzz.html'), self.get_output_path('wfuzz.txt'))
         utils.run_cmd(cmd)
+
 
         # Detect and bruteforce HTTP Basic authentication
         if 'WWW-Authenticate: Basic' not in subprocess.check_output('curl -kLI %s' % self.url, shell=True).decode('utf8'):
