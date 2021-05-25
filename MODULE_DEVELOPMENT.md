@@ -1,42 +1,58 @@
-# Module folder structure
+# Blackbird module engine
 
-A module is a folder in the "blackbird/modules" directory.
-
-It follows this structure:
-
-```
-<modulename>/
-├── __init__.py
-├── setup.sh
-├── README.md
-└── <any resource file(s)>
-```
+Modules are stored in the **blackbird/modules** directory.
 
 Modules are called on each port discovered for each target. Modules act at the **service/port** level.
 Therefore, the module developer must define on which services the module is relevant (see below).
 
-## \_\_init\_\_.py
+* Modules are always run against every open port on all targets found.
+* The can_run() method is run and checks if the module is suited to be run on this port/service (e.g don't run an SSH bruteforce if the service is HTTP).
+* If the module can run on the target port, the run() method is then called.
+
+
+## Module source file
 
 This is the python code for the module.
 
-### Module instance
+The module file should be under **blackbird/modules/somemodulename.py**.
 
-The module must to be a **ModuleInstance** class inheriting from the **Module** class. 
-The constructor of the **Module** class has to be called from the module as such:
+Below is the minimal code for a "Hello World" module (save this as balckbird/modules/hello.py):
 
 ```
+from blackbird import utils
+from blackbird import config
 from blackbird.core.module import Module
 
 
 class ModuleInstance(Module):
 
-    def __init__(self, target, port, service, nmap_results, output_dir, proto):
-        Module.__init__(self, target, port, service, nmap_results, output_dir, proto)
+    def can_run(self):
+        return True
+
+    async def run(self):
+        utils.log('Running hello world module against %s:%s' % (self.target, self.port), 'info')
 
 ```
 
+Output should be similar to:
 
-### Module attributes
+```
+blackbird -t 192.168.254.0/24 
+
+...
+
+[*] Running hello module ...
+[*] Running hello world module against 192.168.254.140:135
+[*] Running hello world module against 192.168.254.140:139
+[*] Running hello world module against 192.168.254.140:445
+[*] Running hello world module against 192.168.254.132:53
+[*] Running hello world module against 192.168.254.142:22
+[*] Running hello world module against localhost:22
+[*] Running hello world module against localhost:5432
+[*] Running hello world module against 192.168.254.131:22
+```
+
+## Module attributes
 
 The following attributes are defined by default in the **Module** class.
 
@@ -62,169 +78,131 @@ data returned by the service.
 These values are directly mirrored from nmap XML output. To know more about them, you can check the nmap XML
 output DTD here: https://nmap.org/book/nmap-dtd.html
 
-### Module methods
+### Module tags
 
+In addition, each module should be assigned a tag (when running blackbird with the -M option, which runs specific modules/tags).
 
-
-Three methods at least have to be defined in a **ModuleInstance** class:
-
-* can_run(self)
-* enum(self)
-* brute(self)
-
-The **can_run** method returns a boolean, indicating if the module is suited to be run on a particular service.
-Indeed, it would not make sense to call an SSH bruteforce module on an FTP server.
-
-Here is an example that will ensure the module is run only on SSH servers detected by nmap.
+By default, moduels have the tag "default", which means they always run unless otherwise specified:
 
 ```
-    def can_run(self):
-        if self.proto == 'tcp' and self.service == 'ssh':
-            return True
-        return False
+class Module:
+    # module tag e.g default, brute, extra
+    TAGS = ["default",]
 ```
 
-The **enum** method is called when the --enum flag is passed on the command line. It should perform various
-enumeration operations, which are not too much time consuming.
+To add additional tags or remove the default tag, just override the TAGS class attribute.
+
+Here, default tag is removed so the module will only run if **-M brute** or **-M http** is set on teh command line, or if the module itself is called explicitly (**-M modulename**)
 
 ```
-def enum(self):
-    utils.log("Performing quick enumeration on %s:%s ..." % (self.target, self.port))
-    
-    Checking some well-known config issue ...
-    
-    Extracting encryption certificates ...
-    
-    Grabbing a screenshot ...
+class ModuleInstance(Module):
+    TAGS = ["brute","http"]
 ```
 
-The **brute** method is called when the --brute flag is passed on the command line. It should perform
-lenghthy operations, such as all kinds of bruteforce.
+## Module methods
 
-```
-    def brute(self):
-        utils.log("Performing all kinds of lenthy bruteforce on %s:%s ..." % (self.target, self.port))
-        
-        Doing login/password bruteforce ...
-        
-        Checking default accounts ...
-        
-        URL bruteforce ...
-        
-        SID bruteforce ...
-```
+The following methods are defined in the **Module** class.
 
-Helper methods are inherited from the **Module** class:
+### can_run(self)
 
-* **self.get_resource_path(filename)**: returns absolute path to a file stored in the module folder.
-This must be used to reference any resource material included in the module folder, such as wordlists or scripts.
-
-* **self.get_output_path(filename)**: returns absolute path to a file to be stored in the output folder.
-This is used to store module output, such as logs and screenshots, without knowning in advance the full
-output path.
-
-Let's say we run a bruteforce tool in our **brute** method, with a wordlist included in the module 
-and we want to store the result in the current scan directory.
-The function would be like this:
-
-```
-def brute(self):
-    utils.runcmd('bruteforcer %s %s --wordlist %s --output %s' %
-        (self.target, self.port, 
-            self.get_resource_path('wordlist.txt'), 
-            self.get_output_path('bruteforce_output.txt')))
-``` 
-
-### utils.py
-
-This contains utility procedures that can be used in modules.
-
-```
-from blackbird import utils
-```
-
-**utils.run_cmd** should be used to run system commands.
-
-```
-run_cmd(cmdline, timeout=None, shell=True, wdir=None)
-```
-
-* **timeout** is a number of seconds to wait for the process to complete (default: no timeout)
-* **wdir** can be set to override the default process working directory
-
-**utils.log** is used to print module output.
-
-```
-log(log_str, log_type='')
-```
-
-* **log_type** can be set to "info" to change the output color. Default is no color override.
-
-
-## setup.sh
-
-This is a shell script that installs module dependencies. This includes any third party tools, python
-modules, and any setup needed by the module.
+Should be overriden to return True if the module should run given the port/protocol/additional checks. Otherwise should return False.
 
 Example:
 ```
-#!/bin/bash
-
-# Install third-party tools
-apt-get -yq update
-apt-get -yq install chromium curl whatweb wfuzz hydra
-
-# Any other setup instruction ...
+# Run module only on tcp port flagged as ssh by nmap
+def can_run(self):
+    if self.proto == 'tcp' and self.service == 'ssh':
+    	return True
+    return False
 ```
 
-## README.md
+### async def run(self):
 
-This is a plaintext file containing module documentation. It can provide the user with information about how
-the module works and the output of the module.
+Should be overriden to implement module logic (running commands, performing attacks etc).
 
-# Example
-
-Here is an example of an "hello world" module.
+Example: 
 
 ```
-from blackbird import utils
-from blackbird import config
-from blackbird.core.module import Module
+async def run(self):
+	utils.log('Running my module against %s:%s' % (self.target, self.port), 'info')
+	# module logic ...
+```
 
+### get_resource_path(self, filename)
 
-class ModuleInstance(Module):
-    
-    # Init module variables
+If the module needs external files (such as wordlist), the standard procedure is to put them in the **resources** directory (**blackbird/modules/resources**) and access them by calling this method.
+
+Example: 
+
+```
+async def run(self):
+	# module logic ...
+	# get the full path to <blackbird_dir>/modules/resources/ssh-usernames.txt
+	user_list = self.get_resource_path('ssh-usernames.txt')
+	# Example : run command with user_list as argument ...
+	wait utils.run_cmd("bruteforce.sh --wordlist {} --host {} --port {}".format(user_list, self.target, self.port))
+```
+
+### get_output_path(self, filename)
+
+Returns the absolute path to the module output dir (within the blackbird instance working directory). When a module needs to output data, first get the output path by calling this method. Then write to the file. The file will be stored in the correct host and port folder at runtime.
+
+Example:
+
+```
+async def run(self):
+	utils.log('Running my module against %s:%s' % (self.target, self.port), 'info')
+	... module logic ...
+	output_file = self.get_output_path('my_module_output.log')
+	with open(output_file, 'w') as out:
+		out.write('blah')
+```
+
+### Module contructor
+
+The constructor does not need to be overriden but in case you want to perform actions on module instanciation or create a module subclass, then you should call the main contructor first:
+
+```
+ class HttpModule(Module):
+	# Load module with target and service info
     def __init__(self, target, port, service, nmap_results, output_dir, proto):
         Module.__init__(self, target, port, service, nmap_results, output_dir, proto)
-        self.some_var = 1
-    
-    # Module should be run only on ssh services
-    def can_run(self):
-        if self.proto == 'tcp' and self.service == 'ssh':
-            return True
-        return False
-    
-    # Perform quick enumeration
-    def enum(self):
-        utils.log("Performing enumeration on %s:%s ..." % (self.target, self.port))
-        utils.run_cmd('ls -alh /')
-    
-    # Perform bruteforce
-    def brute(self):
-        utils.log("Performing all kinds of lenthy bruteforce on %s:%s ..." % (self.target, self.port))
-        utils.runcmd('bruteforcer %s %s --wordlist %s --output %s' %
-        (self.target, self.port, 
-            self.get_resource_path('wordlist.txt'), 
-            self.get_output_path('bruteforce_output.txt'))) 
+    	# Perform additional actions
 ```
 
-The module structure will look like this:
+Module subclasses exist and can implement specific methods. For example, HttpModule implements HTTP related methods.
+
+## Utility functions
+
+Utility functions are defined in the **utils** modules and can be called from modules.
+
+### utils.log
+
+Print something to the main logfile:
 
 ```
-helloworld
-├── __init__.py
-├── setup.sh
-├── README.md
-└── wordlist.txt
+utils.log("Hello", "info")
+utils.log("Hello", "warning")
+utils.log("Hello", "error")
+utils.log("Hello") # no formatting
 ```
+
+### utils.run_cmd
+
+Run an external command or tool (async).
+
+By default, output is printed to the log file (unless print_output=False is passed). Additional operations (e.g store to a file) can be done by retreiving the return value of run_cmd which is the raw command output.
+
+```
+output = wait utils.run_cmd("ls -alh")
+# do something with cmd output
+```
+
+A timeout can be set (default is 15minutes).
+
+This will abort run_cmd and print a warning message indicating command timed out.
+
+```
+wait utils.run_cmd("sleep 1000", timeout=5)
+```
+

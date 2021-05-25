@@ -4,3 +4,8 @@ __pycache__
 venv
 *.pyc
 .idea
+.vscode
+TODO
+TODO.txt
+TODO.md
+.venv

@@ -6,7 +6,9 @@ import shutil
 import signal
 import sys
 import datetime
-import fcntl
+import asyncio
+import glob
+import os
 
 from bs4 import BeautifulSoup
 import termcolor
@@ -14,53 +16,73 @@ import termcolor
 from blackbird import config
 
 
-logging.basicConfig(format='\n%(asctime)s::%(levelname)s::%(message)s',level=logging.DEBUG)
-logging.getLogger().addHandler(logging.FileHandler(filename='output.log', mode='w'))
+RUNNING_PROCS = []
 
 
-def run_cmd(cmdline, timeout=None, shell=True, wdir=None):
-    log(termcolor.colored("Running command : ", 'green') + "%s" % cmdline)
+logging.basicConfig(format='%(message)s',level=logging.INFO)
+
+
+def setup_logfile():
+    logging.getLogger().addHandler(logging.FileHandler(filename=os.path.join(config.OUTPUT_PATH, 'blackbird.log'), mode='w'))
+
+
+# Run a command asynchronously and return output
+# Enforce a timeout and max conccurent processes run by the program
+async def run_cmd(cmdline, timeout=60*15, print_output=True, wdir=None):
+    global RUNNING_PROCS
+    while len(RUNNING_PROCS) >= config.MAX_TASKS:
+        # Too many tasks running, sleeping for some time
+        await asyncio.sleep(10)
+    RUNNING_PROCS.append(cmdline)
+    log("Running : {}".format(cmdline), 'info')
     try:
-        proc = subprocess.Popen(cmdline, shell=shell, cwd=wdir,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE, bufsize=1)
-        proc_output = ""
-        start_time = datetime.datetime.now().timestamp()
-        proc_fl = fcntl.fcntl(proc.stdout, fcntl.F_GETFL)
-        fcntl.fcntl(proc.stdout, fcntl.F_SETFL, proc_fl | os.O_NONBLOCK)
-        while True:
-            # Exit if timeout expired
-            if timeout and (datetime.datetime.now().timestamp() - start_time) > timeout:
-                log("Command timed out: %s" % cmdline, 'warning')
-                break
-            # Exit if process has returned
-            if proc.poll() is not None:
-                break
-            output = proc.stdout.readline()
-            # Print output if any
-            if output:
-                output = output.decode('utf8')
-                sys.stdout.write(output)
-                proc_output += output
-        log(termcolor.colored('Command finished: ', 'green') + cmdline)
-        return proc_output
-    except subprocess.TimeoutExpired:
-        proc.kill()
-        proc.wait()
-        log("Command execution timed out for '%s'" % cmdline, 'warning')
+        if not config.DRY_RUN:
+            proc = await asyncio.create_subprocess_shell(
+                cmdline,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE)
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout)
+            output = ""
+            if stdout:
+                stdout = stdout.decode('cp850' if os.name == 'nt' else 'utf8')
+                if stdout:
+                    output += str(stdout)
+            if stderr:
+                stderr = stderr.decode('cp850' if os.name == 'nt' else 'utf8')
+                if stderr:
+                    output += str(stderr)
+
+            if print_output:
+                log("Output for : {}".format(cmdline), 'info')
+                log(output)
+            RUNNING_PROCS.remove(cmdline)
+            if RUNNING_PROCS:
+                log("%s running tasks:\n" % len(RUNNING_PROCS) + "\n".join(RUNNING_PROCS), "info")
+            return output
+        else:
+            RUNNING_PROCS.remove(cmdline)
+            return ""
+    except asyncio.TimeoutError as exc:
+        log("Command execution timed out : {}".format(cmdline), 'warning')
+    except Exception as exc:
+        if cmdline in RUNNING_PROCS:
+            RUNNING_PROCS.remove(cmdline)
+        log("Command execution failed : {}\n{}".format(cmdline, exc), 'warning')
 
 
+# Output message to the logs
 def log(log_str, log_type=''):
     if log_type == 'info':
-        logging.info(termcolor.colored('[*] ' + log_str + "\n", 'green'))
+        logging.info(termcolor.colored('[*] ' + log_str, 'green'))
     elif log_type == 'error':
-        logging.critical(termcolor.colored('[!] ' + log_str + "\n", 'red'))
+        logging.critical(termcolor.colored('[!] ' + log_str, 'red'))
     elif log_type == 'warning':
-        logging.warning(termcolor.colored('[!] ' + log_str + "\n", 'yellow'))
+        logging.warning(termcolor.colored('[!] ' + log_str, 'yellow'))
     else:
         logging.info(log_str)
 
 
+# Read nmap XML output and returns dict
 def parse_nmap_xml(filename):
     host_info = dict()
     if not os.path.exists(filename):
@@ -70,6 +92,10 @@ def parse_nmap_xml(filename):
     soup = BeautifulSoup(xml_file, 'lxml')
     for host in soup.find_all('host'):
         host_addr = host.address['addr']
+        hostnames = host.find_all('hostname')
+        for hostname in hostnames:
+            if hostname['type'] == 'user':
+                host_addr = hostname['name']
         if host_addr not in host_info:
             host_info[host_addr] = dict()
             host_info[host_addr]["tcp"] = dict()
@@ -90,6 +116,7 @@ def parse_nmap_xml(filename):
     return host_info
 
 
+# Read hostnames from nmap scan
 def get_nmap_hostnames(host):
     filename = os.path.join(config.OUTPUT_PATH, host, 'port-scan.xml')
     if not os.path.exists(filename):
@@ -107,10 +134,13 @@ def get_nmap_hostnames(host):
     return host_names
 
 
+# Enumerates vhosts
+# to update with multiple vhost enumeration techniques
 def get_hostnames(host):
     return get_nmap_hostnames(host)
 
 
+# Search nmap scan for string and return matching services
 def find_services(nmap_file, search_string):
     host_info = parse_nmap_xml(nmap_file)
     matching_services = []
@@ -132,6 +162,7 @@ def find_services(nmap_file, search_string):
                             yield service
 
 
+# Merge a list of nmap scans into one file
 def merge_nmap_files(file_list, output_file):
     log("Merging %s ... " % file_list, 'info')
     output = open(output_file, 'w')
@@ -151,6 +182,7 @@ def merge_nmap_files(file_list, output_file):
     output.close()
 
 
+# Split a nmap scan into per host scan files
 def split_nmap_file(nmap_xml_file, output_dir):
     for host in get_host_list(nmap_xml_file):
         host_xml = os.path.join(output_dir, host, "port-scan.xml")
@@ -167,6 +199,10 @@ def split_nmap_file(nmap_xml_file, output_dir):
     soup = BeautifulSoup(xml_file, 'lxml')
     for host in soup.find_all('host'):
         host_addr = host.address['addr']
+        host_domains = host.find_all('hostname')
+        for domain in host_domains:
+            if domain['type'] == 'user':
+                host_addr = domain['name']
         log('Extracting data for %s' % host_addr, 'info')
         host_dir = os.path.join(output_dir, host_addr)
         if not os.path.exists(host_dir):
@@ -180,41 +216,61 @@ def split_nmap_file(nmap_xml_file, output_dir):
         host_file.write(str(host))
         host_file.close()
     xml_file.close()
-    for host in get_host_list(nmap_xml_file):
+    for host in get_host_list():
         host_xml = os.path.join(output_dir, host, "port-scan.xml")
         with open(host_xml, 'a') as host_file:
             host_file.write('\n</nmaprun>\n')
 
 
+# Import nmap XML to the scan directory
 def import_nmap_scans(nmap_xml_files, output_dir):
     log("Importing %s ..." % nmap_xml_files, 'info')
     for xml_file in nmap_xml_files:
         if not os.path.exists(xml_file):
             log("File does not exist: %s" % xml_file, 'error')
-            return
-    sweep_file = os.path.join(output_dir, 'sweep.xml')
-    merge_nmap_files(nmap_xml_files, sweep_file)
-    update_nmap_summary([sweep_file])
-    split_nmap_file(sweep_file, output_dir)
+            continue
+    imported_xml = os.path.join(output_dir, 'imported.xml')
+    merge_nmap_files(nmap_xml_files, imported_xml)
+    update_nmap_summary([imported_xml])
+    split_nmap_file(imported_xml, output_dir)
     log("Done importing into %s" % output_dir, 'info')
 
 
+# Add multiple scan files results to the main nmap file
 def update_nmap_summary(xml_files):
     nmap_summary_file = os.path.join(config.OUTPUT_PATH, 'nmap_summary.xml')
     if os.path.exists(nmap_summary_file):
         old_nmap_summary_file =  nmap_summary_file + ".old"
         shutil.copyfile(nmap_summary_file, old_nmap_summary_file)
         xml_files.append(old_nmap_summary_file)
-    merge_nmap_files(xml_files, nmap_summary_file)
+        merge_nmap_files(xml_files, nmap_summary_file)
+        os.remove(old_nmap_summary_file)
+    else:
+        merge_nmap_files(xml_files, nmap_summary_file)
 
 
-def get_host_list(nmap_xml):
+# Extract hosts from nmap file
+def get_host_list(nmap_xml=None):
+    if not nmap_xml:
+        nmap_xml = os.path.join(config.OUTPUT_PATH, 'nmap_summary.xml')
+    if not os.path.exists(nmap_xml):
+        return []
     nmap_results = parse_nmap_xml(nmap_xml)
-    return nmap_results.keys()
+    return list(nmap_results.keys())
 
 
+# List installed modules
 def get_module_list():
-    module_list = glob.glob(os.path.join(config.INSTALL_DIR, 'blackbird/modules/', "*"))
-    module_list =[os.path.basename(f) for f in module_list if
-                  not (not os.path.isdir(f) or not os.path.exists(os.path.join(f, '__init__.py')))]
+    module_list = glob.glob(os.path.join(config.INSTALL_DIR, 'blackbird/modules/', "*.py"))
+    module_list = [ os.path.basename(f)[:-3] for f in module_list if os.path.isfile(f) and not f.endswith('__init__.py')]
     return module_list
+
+
+def get_logo():
+    return r"""
+____  _            _    _     _         _ 
+| __ )| | __ _  ___| | _| |__ (_)_ __ __| |
+|  _ \| |/ _` |/ __| |/ / '_ \| | '__/ _` |
+| |_) | | (_| | (__|   <| |_) | | | | (_| |
+|____/|_|\__,_|\___|_|\_\_.__/|_|_|  \__,_|
+"""
