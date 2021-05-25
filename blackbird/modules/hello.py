@@ -4,6 +4,8 @@ from blackbird.core.module import Module
 
 
 class ModuleInstance(Module):
+    
+    TAGS = ['hello',]
 
     def can_run(self):
         return True
