@@ -92,7 +92,7 @@ class Module:
 
 To add additional tags or remove the default tag, just override the TAGS class attribute.
 
-Here, default tag is removed so the module will only run if **-M brute** or **-M http** is set on teh command line, or if the module itself is called explicitly (**-M modulename**)
+Here, default tag is removed so the module will only run if **-M brute** or **-M http** is set on the command line, or if the module itself is called explicitly (**-M modulename**)
 
 ```
 class ModuleInstance(Module):
@@ -112,7 +112,7 @@ Example:
 # Run module only on tcp port flagged as ssh by nmap
 def can_run(self):
     if self.proto == 'tcp' and self.service == 'ssh':
-    	return True
+        return True
     return False
 ```
 
@@ -124,8 +124,8 @@ Example:
 
 ```
 async def run(self):
-	utils.log('Running my module against %s:%s' % (self.target, self.port), 'info')
-	# module logic ...
+    utils.log('Running my module against %s:%s' % (self.target, self.port), 'info')
+    # module logic ...
 ```
 
 ### get_resource_path(self, filename)
@@ -136,11 +136,11 @@ Example:
 
 ```
 async def run(self):
-	# module logic ...
-	# get the full path to <blackbird_dir>/modules/resources/ssh-usernames.txt
-	user_list = self.get_resource_path('ssh-usernames.txt')
-	# Example : run command with user_list as argument ...
-	wait utils.run_cmd("bruteforce.sh --wordlist {} --host {} --port {}".format(user_list, self.target, self.port))
+    # module logic ...
+    # get the full path to <blackbird_dir>/modules/resources/ssh-usernames.txt
+    user_list = self.get_resource_path('ssh-usernames.txt')
+    # Example : run command with user_list as argument ...
+    wait utils.run_cmd("bruteforce.sh --wordlist {} --host {} --port {}".format(user_list, self.target, self.port))
 ```
 
 ### get_output_path(self, filename)
@@ -151,11 +151,11 @@ Example:
 
 ```
 async def run(self):
-	utils.log('Running my module against %s:%s' % (self.target, self.port), 'info')
-	... module logic ...
-	output_file = self.get_output_path('my_module_output.log')
-	with open(output_file, 'w') as out:
-		out.write('blah')
+    utils.log('Running my module against %s:%s' % (self.target, self.port), 'info')
+    ... module logic ...
+    output_file = self.get_output_path('my_module_output.log')
+    with open(output_file, 'w') as out:
+        out.write('blah')
 ```
 
 ### Module contructor
@@ -164,10 +164,10 @@ The constructor does not need to be overriden but in case you want to perform ac
 
 ```
  class HttpModule(Module):
-	# Load module with target and service info
+    # Load module with target and service info
     def __init__(self, target, port, service, nmap_results, output_dir, proto):
         Module.__init__(self, target, port, service, nmap_results, output_dir, proto)
-    	# Perform additional actions
+        # Perform additional actions
 ```
 
 Module subclasses exist and can implement specific methods. For example, HttpModule implements HTTP related methods.
@@ -200,7 +200,7 @@ output = wait utils.run_cmd("ls -alh")
 
 A timeout can be set (default is 15minutes).
 
-This will abort run_cmd and print a warning message indicating command timed out.
+This will abort run_cmd after 5 seconds and print a warning message indicating command timed out.
 
 ```
 wait utils.run_cmd("sleep 1000", timeout=5)

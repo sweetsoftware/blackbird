@@ -4,7 +4,6 @@ Network reconnaissance and enumeration tool.
 
 ## Install
 
-Launch setup.py. This will install python requirements as well as module dependencies.
 
 ```
 # Install python requirements
@@ -21,7 +20,7 @@ Common usage examples:
 
 ```
 # Scan whole subnet and store results in "bboutput"
-blackbird -t 192.168.254.0/24 -w output
+blackbird -t 192.168.254.0/24 -w bboutput
 
 # Scan targets in targets.txt (one host/subnet by line), store output to a temp directory
 blackbird -t targets.txt
@@ -39,8 +38,6 @@ blackbird -t targets.txt -M mymodule,default,http
 blackbrid --nmap-import nmap.xml -w bboutput
 blackbird -w bboutput
 ```
-
-
 
 ## Help
 
