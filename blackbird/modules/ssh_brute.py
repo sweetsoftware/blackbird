@@ -7,10 +7,6 @@ class ModuleInstance(Module):
 
     TAGS = ["brute",]
 
-    def __init__(self, target, port, service, nmap_results, output_dir, proto):
-        Module.__init__(self, target, port, service, nmap_results, output_dir, proto)
-
-
     def can_run(self):
         if self.proto == 'tcp' and self.service == 'ssh':
             return True
@@ -41,6 +37,4 @@ class ModuleInstance(Module):
             cmd = "hydra -t 4 -v -L %s -P %s -I -e nsr -f ssh://%s:%s" % (user_list, pass_list, self.target,self.port)
         elif userpass_list:
             cmd = "hydra -t 4 -v -C %s -I -f ssh://%s:%s" % (userpass_list, self.target, self.port)
-        output = await utils.run_cmd(cmd)
-        with open(outfile, 'w') as out:
-            out.write(output)
+        await utils.run_cmd(cmd, outfile=outfile)

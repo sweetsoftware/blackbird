@@ -1,5 +1,6 @@
 import requests
 requests.packages.urllib3.disable_warnings()
+import aiohttp
 
 from .module import Module
 from blackbird import utils 
@@ -11,11 +12,10 @@ class HttpModule(Module):
     TAGS = ["http",]
 
     # Load module with target and service info
-    def __init__(self, target, port, service, nmap_results, output_dir, proto):
-        Module.__init__(self, target, port, service, nmap_results, output_dir, proto)
+    def __init__(self, target, port, service, nmap_results, output_dir, proto, hostnames):
+        Module.__init__(self, target, port, service, nmap_results, output_dir, proto, hostnames)
         self.tls = self.is_tls(service, nmap_results)
         self.user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:67.0) Gecko/20100101 Firefox/67.0'
-        self.hostnames = utils.get_hostnames(self.target)
 
 
     def is_tls(self, service, nmap_results):
@@ -40,21 +40,25 @@ class HttpModule(Module):
         return url
 
 
-    def can_run(self):
+    async def can_run(self):
         if self.proto == 'tcp' and (self.service == 'http' or self.service == 'https'):
             return True
         # nmap doesn't mark some HTTP services as so, check the service response for HTTP
         # if service port is a common HTTP port, we also try to make an HTTP request directly
         elif "HTTP" in self.nmap_results["servicefp"] or \
-            int(self.port) in [80, 443, 8080, 8443, 8000, 8443]:
+            int(self.port) in [80, 443, 8080, 8443, 8000]:
             try:
-                req = requests.get(self.get_url(), verify=False, timeout=5)
+                async with aiohttp.ClientSession() as session:
+                    await session.get(self.get_url(), verify=False, timeout=10)
+                    return True
             except requests.exceptions.Timeout:
-                utils.log('Service not responding: {}'.format(self.get_url()))
+                utils.log('HTTP timeout: {}'.format(self.get_url()))
                 return False
-            return True
+            except:
+                return False
         return False
-    
+
+
     # Run the module
     async def run(self):
         raise NotImplementedError("The run() method is not implemented in %s" % self.module_dir)

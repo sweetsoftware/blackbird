@@ -16,6 +16,8 @@ MODULES = set()
 ONLY_CUSTOM_BRUTE = False
 DRY_RUN = False
 
-INSTALL_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-MAX_TASKS = 50
+MAX_TASKS = 10
 SHOW_LOGO = True
+
+CMD_TIMEOUT = 60 * 15
+RUNNING_PROCS = []

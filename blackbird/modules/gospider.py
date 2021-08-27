@@ -10,7 +10,4 @@ class ModuleInstance(HttpModule):
         for hostname in self.hostnames:
             cmd = "gospider -s '%s'" % \
                 (self.get_url(hostname))
-            output = await utils.run_cmd(cmd)
-            outfile = self.get_output_path('gospider-%s.txt' % hostname)
-            with open(outfile, 'w') as out:
-                out.write(output)
+            await utils.run_cmd(cmd, outfile=self.get_output_path("gospider-%s.txt" % hostname))
