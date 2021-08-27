@@ -1,14 +1,15 @@
-from blackbird import utils
-from blackbird import config
+from blackbird.core import utils
+from blackbird.core import config
 from blackbird.core.module import Module
+from blackbird.core import log
 
 
 class ModuleInstance(Module):
     
     TAGS = ['hello',]
 
-    def can_run(self):
+    async def can_run(self):
         return True
 
     async def run(self):
-        utils.log('Running hello world module against %s:%s' % (self.target, self.port), 'info')
+        log.info('Running hello world module against %s:%s' % (self.host.address, self.service.port))

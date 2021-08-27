@@ -1,9 +1,7 @@
-import os
-
-
 CUSTOM_USER_LIST = ""
 CUSTOM_PASS_LIST = ""
 CUSTOM_USERPASS_LIST = ""
+BRUTE_TYPE = "default"
 
 NO_PING = False
 SCAN = False

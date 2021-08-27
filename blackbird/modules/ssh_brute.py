@@ -1,40 +1,33 @@
-from blackbird import utils
-from blackbird import config
+import asyncio
+
+from blackbird.core import utils
+from blackbird.core import config
 from blackbird.core.module import Module
+from blackbird.core import log
+
+from blackbird.core.basic_bruteforce import BasicBruteforceModule
 
 
-class ModuleInstance(Module):
+class ModuleInstance(BasicBruteforceModule):
 
     TAGS = ["brute",]
+ 
+    default_user_list = 'ssh-usernames.txt'
+    default_pass_list = 'ssh-passwords.txt'
+    default_userpass_list = 'ssh-userpass.txt'
+    output_file_prefix = "hydra"
 
-    def can_run(self):
-        if self.proto == 'tcp' and self.service == 'ssh':
+    async def can_run(self):
+        if self.service.transport == 'tcp' and self.service.protocol == 'ssh':
             return True
         return False
 
 
-    async def run(self):
-        utils.log('Starting SSH bruteforce against %s:%s' % (self.target, self.port), 'info')
-        user_list = self.get_resource_path('ssh-usernames.txt')
-        pass_list = self.get_resource_path('ssh-passwords.txt')
-        userpass_list = self.get_resource_path('ssh-userpass.txt')
-
-        if not config.ONLY_CUSTOM_BRUTE:
-            await self.do_bruteforce(self.get_output_path('hydra-1.log'), user_list=user_list, pass_list=pass_list)
-            await self.do_bruteforce(self.get_output_path('hydra-2.log'), userpass_list=userpass_list)
-
-        if config.CUSTOM_USER_LIST and config.CUSTOM_PASS_LIST:
-            outfile = self.get_output_path('hydra_custom1.log')
-            self.do_bruteforce(outfile, user_list=config.CUSTOM_USER_LIST, pass_list=config.CUSTOM_PASS_LIST)
-        
-        if config.CUSTOM_USERPASS_LIST:
-            outfile = self.get_output_path('hydra_custom2.log')
-            await self.do_bruteforce(outfile, userpass_list=config.CUSTOM_USERPASS_LIST)
+    async def bruteforce_user_pass(self, user_list, pass_list, outfile):
+        cmd = "hydra -t 4 -v -L %s -P %s -I -e nsr -f ssh://%s:%s" % (user_list, pass_list, self.host.address, self.service.port)
+        await utils.run_cmd(cmd, outfile=self.get_output_path(outfile))
 
 
-    async def do_bruteforce(self, outfile, user_list=None, pass_list=None, userpass_list=None):
-        if user_list and pass_list:
-            cmd = "hydra -t 4 -v -L %s -P %s -I -e nsr -f ssh://%s:%s" % (user_list, pass_list, self.target,self.port)
-        elif userpass_list:
-            cmd = "hydra -t 4 -v -C %s -I -f ssh://%s:%s" % (userpass_list, self.target, self.port)
-        await utils.run_cmd(cmd, outfile=outfile)
+    async def bruteforce_userpass(self, userpass_list, outfile):
+        cmd = "hydra -t 4 -v -C %s -I -f ssh://%s:%s" % (userpass_list, self.host.address, self.service.port)
+        await utils.run_cmd(cmd, outfile=self.get_output_path(outfile))

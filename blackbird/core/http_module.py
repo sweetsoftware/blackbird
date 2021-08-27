@@ -2,8 +2,9 @@ import requests
 requests.packages.urllib3.disable_warnings()
 import aiohttp
 
-from .module import Module
-from blackbird import utils 
+from blackbird.core.module import Module
+from blackbird.core import utils 
+from blackbird.core import log
 
 
 class HttpModule(Module):
@@ -12,53 +13,48 @@ class HttpModule(Module):
     TAGS = ["http",]
 
     # Load module with target and service info
-    def __init__(self, target, port, service, nmap_results, output_dir, proto, hostnames):
-        Module.__init__(self, target, port, service, nmap_results, output_dir, proto, hostnames)
-        self.tls = self.is_tls(service, nmap_results)
+    def __init__(self, host, service, output_dir):
+        Module.__init__(self, host, service, output_dir)
+        self.tls = self.is_tls()
         self.user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:67.0) Gecko/20100101 Firefox/67.0'
 
 
-    def is_tls(self, service, nmap_results):
-        if service == 'https':
+    def is_tls(self):
+        if self.service == 'https':
             return True
-        elif nmap_results['tunnel'] == 'ssl':
+        elif self.service.tunnel == 'ssl':
             return True
-        elif self.port == '443':
+        elif self.service.port == '443':
             return True
 
 
     def get_url(self, hostname=None):
-        host = hostname if hostname else self.target
+        host = hostname if hostname else self.host.address
         if self.tls:
             url = "https://" + host
-            if self.port != 443:
-                url += ":" + self.port
+            if self.service.port != 443:
+                url += ":" + self.service.port
         else:
             url = "http://" + host
-            if self.port != 80:
-                url += ":" + self.port
+            if self.service.port != 80:
+                url += ":" + self.service.port
         return url
 
 
     async def can_run(self):
-        if self.proto == 'tcp' and (self.service == 'http' or self.service == 'https'):
+        if self.service.transport == 'tcp' and (self.service.protocol in ['http', 'https']):
             return True
         # nmap doesn't mark some HTTP services as so, check the service response for HTTP
         # if service port is a common HTTP port, we also try to make an HTTP request directly
-        elif "HTTP" in self.nmap_results["servicefp"] or \
-            int(self.port) in [80, 443, 8080, 8443, 8000]:
+        elif "HTTP" in self.service.servicefp or \
+            int(self.service.port) in [80, 443, 8080, 8443, 8000]:
             try:
                 async with aiohttp.ClientSession() as session:
                     await session.get(self.get_url(), verify=False, timeout=10)
                     return True
             except requests.exceptions.Timeout:
-                utils.log('HTTP timeout: {}'.format(self.get_url()))
+                log.warn('HTTP timeout: {}'.format(self.get_url()))
                 return False
             except:
                 return False
         return False
-
-
-    # Run the module
-    async def run(self):
-        raise NotImplementedError("The run() method is not implemented in %s" % self.module_dir)

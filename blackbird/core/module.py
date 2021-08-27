@@ -1,9 +1,10 @@
 import os
 import inspect
+import asyncio
 import abc
 
-from blackbird import utils
-from blackbird import config
+from blackbird.core import utils
+from blackbird.core import config
 
 class Module:
 
@@ -11,23 +12,14 @@ class Module:
     TAGS = ["default",]
 
     # Load module with target and service info
-    def __init__(self, target, port, service, nmap_results, output_dir, proto, hostnames):
-        self.target = target
-        self.port = port
-        self.service = service
-        self.nmap_results = nmap_results
+    def __init__(self, host, service, output_dir):
         self.output_dir = output_dir
-        self.proto = proto
         self.module_dir = os.path.dirname(inspect.getfile(self.__class__))
+        self.module_name = os.path.basename(inspect.getfile(self.__class__))[:-3]
         self.ressource_dir = os.path.join(self.module_dir, 'resources')
-        self.product = nmap_results['product']
-        self.version = nmap_results['version']
-        self.extrainfo = nmap_results['extrainfo']
-        self.tunnel = nmap_results['tunnel']
-        self.servicefp = nmap_results['servicefp']
         self.is_bruteforce = False
-        self.hostnames = set(hostnames)
-        self.hostnames.add(target)
+        self.host = host
+        self.service = service
         if not os.path.exists(self.output_dir):
             os.makedirs(self.output_dir)
 
@@ -38,17 +30,16 @@ class Module:
 
     # Get full path to the module's output directory
     def get_output_path(self, filename):
-        return os.path.join(self.output_dir, self.target + "-" + self.proto + "-" + self.port + "-" + filename)
+        return os.path.join(self.output_dir, self.host.address + "-" + self.service.transport + "-" + self.service.port + "-" + filename)
 
     # Check if the module can run on this service
     async def can_run(self):
-        return True
+        raise NotImplementedError("The can_run() method is not implemented in %s" % self.module_name)
 
     # Run the module
     async def _run(self):
-        can_run = await self.can_run()
-        if can_run:
+        if await self.can_run():
             await self.run()
 
     async def run(self):
-        raise NotImplementedError("The run() method is not implemented in %s" % self.module_dir)
+        raise NotImplementedError("The run() method is not implemented in %s" % self.module_name)
