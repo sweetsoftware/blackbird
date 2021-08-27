@@ -22,9 +22,20 @@ class BlackBird():
 
     def __init__(self, input_files=None,
         brute_type='default', user_list=None, pass_list=None, userpass_list=None,
-        search=None, modules='default', output_dir=None, host_file=None, targets=None):
+        search=None, modules='default', output_dir=None, host_file=None, targets=None,
+        cmd_timeout=60*15, show_logo=True, max_tasks=10, dry_run=False):
 
         self.INSTALL_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+        
+        if cmd_timeout:
+            config.CMD_TIMEOUT = int(cmd_timeout)
+        if not show_logo:
+            config.SHOW_LOGO = False
+        if max_tasks:
+            config.MAX_TASKS = int(max_tasks)
+        if dry_run:
+            config.DRY_RUN = True
+
         self.search_str = search
         self.modules = self.load_modules(modules.split(","))
         if output_dir:
@@ -124,11 +135,12 @@ class BlackBird():
     async def run(self):
         if config.SHOW_LOGO:
             self.print_logo()
-        log.info("Running ... output dir: " + self.output_dir)
         if self.search_str:
             self.search(self.search_str)
             return
-        await self.recon_scan()
+        if self.hosts:
+            log.info("Running ... output dir: " + self.output_dir)
+            await self.recon_scan()
 
 
     def find_services(self, search_string):

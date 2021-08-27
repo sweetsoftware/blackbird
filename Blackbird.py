@@ -25,6 +25,9 @@ async def main():
     parser.add_argument('--list-modules', action='store_true',
                         help='List available modules')
     parser.add_argument('--dry-run', action='store_true', help='Print commands but do not execute')
+    parser.add_argument('-c', '--max-concurrency', type=int, help='Max concurrent tasks')
+    parser.add_argument('--no-logo', action='store_true', help='Hide logo')
+    parser.add_argument('--cmd-timeout', type=int, help='Timeout for external commands (seconds)')
     args = parser.parse_args()
 
     blackbird = BlackBird(
@@ -37,7 +40,11 @@ async def main():
         pass_list=args.passlist,
         userpass_list=args.userpasslist,
         brute_type=args.brute_type,
-        targets=args.targets)
+        targets=args.targets,
+        cmd_timeout=args.cmd_timeout,
+        show_logo=(not args.no_logo),
+        max_tasks=args.max_concurrency,
+        dry_run=args.dry_run)
     await blackbird.run()
 
 

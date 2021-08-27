@@ -3,19 +3,12 @@ CUSTOM_PASS_LIST = ""
 CUSTOM_USERPASS_LIST = ""
 BRUTE_TYPE = "default"
 
-NO_PING = False
-SCAN = False
-FULL_SCAN = False
-PORTS = None
-
-OUTPUT_PATH = ""
-MODULES = set()
-
-ONLY_CUSTOM_BRUTE = False
 DRY_RUN = False
 
-MAX_TASKS = 10
 SHOW_LOGO = True
 
+MAX_TASKS = 10
+
 CMD_TIMEOUT = 60 * 15
+
 RUNNING_PROCS = []
