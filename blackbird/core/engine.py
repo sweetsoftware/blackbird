@@ -26,7 +26,6 @@ class BlackBird():
         cmd_timeout=60*15, show_logo=True, max_tasks=10, dry_run=False):
 
         self.INSTALL_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
-        
         if cmd_timeout:
             config.CMD_TIMEOUT = int(cmd_timeout)
         if not show_logo:
@@ -35,9 +34,10 @@ class BlackBird():
             config.MAX_TASKS = int(max_tasks)
         if dry_run:
             config.DRY_RUN = True
-
         self.search_str = search
-        self.modules = self.load_modules(modules.split(","))
+        self.modules_to_load = modules.split(',')
+
+        # Output directory
         if output_dir:
             self.output_dir = output_dir
             if os.path.exists(self.output_dir) and os.path.isdir(self.output_dir):
@@ -114,9 +114,9 @@ class BlackBird():
 
     async def recon_scan(self):
         log.info('Initiating reconscan')
+        self.modules = self.load_modules(self.modules_to_load)
         module_instances = []
         for module_name, module_obj in self.modules.items():
-            log.info(f"Running module: {module_name}")
             for host_name, host in self.hosts.items():
                 if self.targets and host_name not in self.targets:
                     for hostname in host.get_hostnames():
@@ -153,12 +153,12 @@ class BlackBird():
                     matching_services.add(service)
         return matching_services
 
-                    
 
     def load_modules(self, modules_to_load):
         modules_by_tag = dict()
         module_list = self.get_module_list()
         
+        log.info("Loading modules")
         for module_name in module_list:
             module_obj = getattr(globals()['modules'], module_name)
             module_tags = module_obj.ModuleInstance.TAGS
@@ -173,6 +173,7 @@ class BlackBird():
         if "all" in modules_to_load:
             for tag in modules_by_tag:
                 for module_name in modules_by_tag[tag]:
+                    log.info("Loaded module : %s" % module_name)
                     modules[module_name] = modules_by_tag[tag][module_name]
             return modules
 
@@ -182,13 +183,13 @@ class BlackBird():
             for tag in modules_by_tag:
                 if module_or_tag in modules_by_tag[tag]:
                     modules[module_or_tag] = modules_by_tag[tag][module_or_tag]
-                    log.info("Loading module : %s" % module_or_tag)
+                    log.info("Loaded module : %s" % module_or_tag)
                     break
             # Load modules by matching tag
             else:
                 if module_or_tag in modules_by_tag:
                     for i in modules_by_tag[module_or_tag]:
-                        log.info("Loading module : %s [%s]" % (i, module_or_tag))
+                        log.info("Loaded module : %s [%s]" % (i, module_or_tag))
                         modules[i] = modules_by_tag[module_or_tag][i]
                 else:
                     raise BlackBirdError('Could not find module or tag named "%s"' % module_or_tag)

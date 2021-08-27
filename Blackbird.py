@@ -45,6 +45,10 @@ async def main():
         show_logo=(not args.no_logo),
         max_tasks=args.max_concurrency,
         dry_run=args.dry_run)
+    if args.list_modules:
+        for module_name in blackbird.get_module_list():
+            print(module_name)
+        return
     await blackbird.run()
 
 
