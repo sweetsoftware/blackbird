@@ -9,10 +9,9 @@ from blackbird.core import log
 
 class HttpModule(Module):
 
-    # module tag e.g default, brute, extra
     TAGS = ["http",]
 
-    # Load module with target and service info
+    
     def __init__(self, host, service, output_dir):
         Module.__init__(self, host, service, output_dir)
         self.tls = self.is_tls()
@@ -20,6 +19,7 @@ class HttpModule(Module):
 
 
     def is_tls(self):
+        """ Returns ture if the service is TLS encrypted. """
         if self.service == 'https':
             return True
         elif self.service.tunnel == 'ssl':
@@ -29,6 +29,7 @@ class HttpModule(Module):
 
 
     def get_url(self, hostname=None):
+        """ Returns full URL to the HTTP service. """
         host = hostname if hostname else self.host.address
         if self.tls:
             url = "https://" + host

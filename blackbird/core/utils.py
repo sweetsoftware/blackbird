@@ -55,7 +55,7 @@ async def run_cmd(cmdline, timeout=config.CMD_TIMEOUT, print_output=True, wdir=N
             return output
         else:
             config.RUNNING_PROCS.remove(cmdline)
-            return ""
+            return "Dry run."
     except asyncio.TimeoutError:
         log.warn("Command execution timed out : {}".format(cmdline))
         return ""

@@ -6,6 +6,7 @@ class ModuleInstance(HttpModule):
 
     TAGS = ['http', 'default']
 
+
     async def run(self):
         for hostname in self.host.get_hostnames():
             cmd = "gospider -s '%s'" % \

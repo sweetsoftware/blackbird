@@ -1,12 +1,6 @@
-import argparse
 import os
-import traceback
 import glob
-import shutil
-import signal
 import asyncio
-import random
-import string
 import tempfile
 import termcolor
 
@@ -56,7 +50,6 @@ class BlackBird():
                 nmap_xml_files.append(path)
             self.load_nmap_xml_files(nmap_xml_files)
 
-
         # Target specification
         self.targets = targets
         if self.targets:
@@ -65,7 +58,7 @@ class BlackBird():
                 if target not in self.hosts:
                     for host in self.hosts:
                         if target not in self.hosts[host].get_hostnames():
-                            log.warn("Target " + target + " is not in scan data.")
+                            raise BlackBirdError("Target " + target + " is not in scan data.")
 
         # Import hostnames
         if host_file:
@@ -91,21 +84,30 @@ class BlackBird():
     
 
     def load_hostnames(self, host_file):
-        with open(host_file, "r") as hfile:
-            for line in hfile.read().splitlines():
-                address = line.split(" ")[0]
-                hostnames = [_.replace(" ", "") for _ in (" ".join(line.split(" ")[1:])).split(",")]
-                if address in self.hosts:
-                    self.hosts[address].add_hostnames(hostnames)
-                else:
-                    log.warn("Address in hosts file but not in scan data: " + address)
+        """ Loads hostnames from file and adds them to the associated hosts. """
+        if not os.path.exists(host_file):
+            raise BlackBirdError("File does not exist: %s" % host_file)
+        try:
+            with open(host_file, "r") as hfile:
+                for line in hfile.read().splitlines():
+                    address = line.split(" ")[0]
+                    hostnames = [_.replace(" ", "") for _ in (" ".join(line.split(" ")[1:])).split(",")]
+                    if address in self.hosts:
+                        self.hosts[address].add_hostnames(hostnames)
+                    else:
+                        log.warn("Address in hosts file but not in scan data: " + address)
+        except Exception as exc:
+            raise BlackBirdError("Error parsing host file: " + str(exc))
 
 
     def load_nmap_xml_files(self, nmap_xml_files):
+        """ Load hosts data from file. """
         for xml_file in nmap_xml_files:
             if not os.path.exists(xml_file):
                 raise BlackBirdError("File does not exist: %s" % xml_file)
             parsed = utils.parse_nmap_xml(xml_file)
+            if not parsed:
+                raise BlackBirdError("No scan data in file: " + xml_file)
             for host_name, host_data in parsed.items():
                 self.hosts[host_name] = Host(host_name, host_data)
         if not self.hosts:
@@ -113,11 +115,15 @@ class BlackBird():
 
 
     async def recon_scan(self):
+        """ Run modules. """
         log.info('Initiating reconscan')
         self.modules = self.load_modules(self.modules_to_load)
-        module_instances = []
+        tasks = []
+        # Iterate through modules
         for module_name, module_obj in self.modules.items():
+            # Iterate through hosts
             for host_name, host in self.hosts.items():
+                # Find if current host is in the targets
                 if self.targets and host_name not in self.targets:
                     for hostname in host.get_hostnames():
                         if hostname in self.targets:
@@ -127,24 +133,28 @@ class BlackBird():
                 module_output_dir = os.path.join(self.output_dir, module_name)
                 for service in host.services:
                     module_instance = module_obj.ModuleInstance(host, service, module_output_dir)
-                    module_instances.append(module_instance)
-        
-        await asyncio.gather(*(instance._run() for instance in module_instances))
+                    tasks.append(module_instance)
+        await asyncio.gather(*(instance._run() for instance in tasks))
 
 
     async def run(self):
+        """ Run instance. """
         if config.SHOW_LOGO:
             self.print_logo()
-        if self.search_str:
-            self.search(self.search_str)
-            return
         if self.hosts:
-            log.info("Running ... output dir: " + self.output_dir)
-            await self.recon_scan()
+            if self.search_str:
+                self.search(self.search_str)
+                return
+            else:
+                log.info("Running ... output dir: " + self.output_dir)
+                await self.recon_scan()
+                log.info("Done. Output in " + self.output_dir)
+        else:
+            raise BlackBirdError("No hosts to process.")
 
 
     def find_services(self, search_string):
-        """ Search nmap scan for string and return matching services. """
+        """ Search hosts services for a string and return matching services. """
         search_string = search_string.lower()
         matching_services = set()
         for host in self.hosts.values():
@@ -155,10 +165,13 @@ class BlackBird():
 
 
     def load_modules(self, modules_to_load):
+        """ Return module objects dict by name from module and tag list. """
         modules_by_tag = dict()
         module_list = self.get_module_list()
         
         log.info("Loading modules")
+
+        # Build module object dict form module list
         for module_name in module_list:
             module_obj = getattr(globals()['modules'], module_name)
             module_tags = module_obj.ModuleInstance.TAGS
@@ -168,7 +181,6 @@ class BlackBird():
                 modules_by_tag[tag][module_name] = module_obj
 
         modules = dict()
-        
         # Load all modules
         if "all" in modules_to_load:
             for tag in modules_by_tag:
@@ -176,7 +188,7 @@ class BlackBird():
                     log.info("Loaded module : %s" % module_name)
                     modules[module_name] = modules_by_tag[tag][module_name]
             return modules
-
+        # Load specific modules by name or tag
         for module_or_tag in modules_to_load:
             module_or_tag = module_or_tag.lower()
             # Load modules by matching name
@@ -185,7 +197,7 @@ class BlackBird():
                     modules[module_or_tag] = modules_by_tag[tag][module_or_tag]
                     log.info("Loaded module : %s" % module_or_tag)
                     break
-            # Load modules by matching tag
+            # Load modules by matching tag (if no module matching by name)
             else:
                 if module_or_tag in modules_by_tag:
                     for i in modules_by_tag[module_or_tag]:
@@ -197,11 +209,11 @@ class BlackBird():
 
     
     def search(self, search_str):
+        """ Search feature. """
         print(termcolor.colored('Services matching "%s" : ' % search_str, 'green'))
         print('-' * 30)
         for result in self.find_services(search_str):
             print(result)
-        return
 
 
     def get_module_list(self):

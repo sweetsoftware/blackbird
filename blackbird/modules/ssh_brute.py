@@ -17,6 +17,7 @@ class ModuleInstance(BasicBruteforceModule):
     default_userpass_list = 'ssh-userpass.txt'
     output_file_prefix = "hydra"
 
+
     async def can_run(self):
         if self.service.transport == 'tcp' and self.service.protocol == 'ssh':
             return True

@@ -15,11 +15,13 @@ class BasicBruteforceModule(Module):
     default_userpass_list = None
     output_file_prefix = 'brute'
 
+
     def __init__(self, host, service, output_dir):
         Module.__init__(self, host, service, output_dir)
 
 
     async def run(self):
+        """ Runs bruteforce with each desired wordlist. """
         user_list = None
         pass_list = None
         userpass_list = None
@@ -46,16 +48,10 @@ class BasicBruteforceModule(Module):
 
 
     async def bruteforce_user_pass(self, user_list, pass_list, outfile):
+        """ Bruteforce with two separate wordlists: usernames and passwords. """
         raise NotImplementedError("The bruteforce_user_pass() method is not implemented in %s" % self.module_name)
 
 
     async def bruteforce_userpass(self, userpass_list, outfile):
+        """ Bruteforce with one username:password combo list. """
         raise NotImplementedError("The bruteforce_userpass() method is not implemented in %s" % self.module_name)
-    
-
-    async def do_bruteforce(self, outfile, user_list=None, pass_list=None, userpass_list=None):
-        if user_list and pass_list:
-            cmd = "hydra -t 4 -v -L %s -P %s -I -e nsr -f ssh://%s:%s" % (user_list, pass_list, self.host.address, self.service.port)
-        elif userpass_list:
-            cmd = "hydra -t 4 -v -C %s -I -f ssh://%s:%s" % (userpass_list, self.host.address, self.service.port)
-        await utils.run_cmd(cmd, outfile=self.get_output_path(outfile))

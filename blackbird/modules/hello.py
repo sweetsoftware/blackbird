@@ -8,8 +8,10 @@ class ModuleInstance(Module):
     
     TAGS = ['hello',]
 
+
     async def can_run(self):
         return True
+
 
     async def run(self):
         log.info('Running hello world module against %s:%s' % (self.host.address, self.service.port))

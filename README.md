@@ -10,8 +10,8 @@ Network reconnaissance and enumeration tool.
 pip3 install -r requirements.txt
 
 # Create symlink if wanted
-ln -sf blackbird.py /usr/local/bin/blackbird
-
+ln -sf "$PWD/Blackbird.py" /usr/local/bin/blackbird
+chmod +x "$_"
 ```
 
 ## Help
