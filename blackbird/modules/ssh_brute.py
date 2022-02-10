@@ -9,9 +9,10 @@ from blackbird.core.basic_bruteforce import BasicBruteforceModule
 
 
 class ModuleInstance(BasicBruteforceModule):
-
+    
     TAGS = ["brute",]
- 
+    TYPE = "service"
+
     default_user_list = 'ssh-usernames.txt'
     default_pass_list = 'ssh-passwords.txt'
     default_userpass_list = 'ssh-userpass.txt'

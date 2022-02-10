@@ -40,8 +40,9 @@ class Host():
         self.services = set()
         for hostname in hostnames:
             self.hostnames.add(hostname)
-        self.hostnames.add(address)
-        for proto in scan_data:
+        for hostname in scan_data["hostnames"]:
+            self.hostnames.add(hostname)
+        for proto in ['tcp', 'udp']:
             for port, port_data in scan_data[proto].items():
                 self.services.add(
                     Service(
@@ -59,7 +60,7 @@ class Host():
 
     
     def get_hostnames(self):
-        return self.hostnames
+        return list(self.hostnames)
 
 
     def add_hostname(self, hostname):

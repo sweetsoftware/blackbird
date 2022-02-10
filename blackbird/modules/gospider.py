@@ -3,9 +3,9 @@ from blackbird.core.http_module import HttpModule
 
 
 class ModuleInstance(HttpModule):
-
+    
     TAGS = ['http', 'default']
-
+    TYPE = "service"
 
     async def run(self):
         for hostname in self.host.get_hostnames():

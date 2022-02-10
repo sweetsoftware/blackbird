@@ -3,11 +3,12 @@ from blackbird.core.http_module import HttpModule
 
 import asyncio
 
+
 class ModuleInstance(HttpModule):
-
+    
     TAGS = ['http', 'default']
-
-
+    TYPE = "service"
+    
     async def run(self):
         for hostname in self.host.get_hostnames():
             cmd = "dirsearch -b -q --random-agent -u '%s'" % self.get_url(hostname)

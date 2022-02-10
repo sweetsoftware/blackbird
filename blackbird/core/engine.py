@@ -93,7 +93,7 @@ class BlackBird():
             with open(host_file, "r") as hfile:
                 for line in hfile.read().splitlines():
                     address = line.split(" ")[0]
-                    hostnames = [_.replace(" ", "") for _ in (" ".join(line.split(" ")[1:])).split(",")]
+                    hostnames = line.split(" ")[1:]
                     if address in self.hosts:
                         self.hosts[address].add_hostnames(hostnames)
                     else:
@@ -110,8 +110,8 @@ class BlackBird():
             parsed = utils.parse_nmap_xml(xml_file)
             if not parsed:
                 raise BlackBirdError("No scan data in file: " + xml_file)
-            for host_name, host_data in parsed.items():
-                self.hosts[host_name] = Host(host_name, host_data)
+            for address, host_data in parsed.items():
+                self.hosts[address] = Host(address, host_data)
         if not self.hosts:
             raise BlackBirdError("No scan data in input files")
 
@@ -124,18 +124,22 @@ class BlackBird():
         # Iterate through modules
         for module_name, module_obj in self.modules.items():
             # Iterate through hosts
-            for host_name, host in self.hosts.items():
+            for address, host in self.hosts.items():
                 # Find if current host is in the targets
-                if self.targets and host_name not in self.targets:
+                if self.targets and address not in self.targets:
                     for hostname in host.get_hostnames():
                         if hostname in self.targets:
                             break
                     else:
                         continue
                 module_output_dir = os.path.join(self.output_dir, module_name)
-                for service in host.services:
-                    module_instance = module_obj.ModuleInstance(host, service, module_output_dir)
+                if module_obj.ModuleInstance.TYPE == 'host':
+                    module_instance = module_obj.ModuleInstance(host, None, module_output_dir)
                     tasks.append(module_instance)
+                elif module_obj.ModuleInstance.TYPE == 'service':
+                    for service in host.services:
+                        module_instance = module_obj.ModuleInstance(host, service, module_output_dir)
+                        tasks.append(module_instance)
         await asyncio.gather(*(instance._run() for instance in tasks))
 
 

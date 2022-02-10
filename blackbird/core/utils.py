@@ -76,13 +76,15 @@ def parse_nmap_xml(filename):
     for host in soup.find_all('host'):
         host_addr = host.address['addr']
         hostnames = host.find_all('hostname')
+        user_hostnames = set()
         for hostname in hostnames:
             if hostname['type'] == 'user':
-                host_addr = hostname['name']
+                user_hostnames.add(hostname['name'])
         if host_addr not in host_info:
             host_info[host_addr] = dict()
             host_info[host_addr]["tcp"] = dict()
             host_info[host_addr]["udp"] = dict()
+            host_info[host_addr]["hostnames"] = user_hostnames
         for port in host.find_all('port'):
             if port.state["state"] == "open":
                 portid = port['portid']

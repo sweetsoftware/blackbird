@@ -7,8 +7,8 @@ from blackbird.core import log
 class ModuleInstance(Module):
     
     TAGS = ['hello',]
-
-
+    TYPE = "service"    
+    
     async def can_run(self):
         return True
 

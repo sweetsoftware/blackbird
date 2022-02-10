@@ -9,8 +9,9 @@ from blackbird.core import config
 
 class Module:
 
-    # module tag e.g default, brute, extra
+    TYPE = "service"
     TAGS = ["default",]
+
 
     def __init__(self, host, service, output_dir):
         """ Load module with target and service info. """
@@ -32,7 +33,11 @@ class Module:
 
     def get_output_path(self, filename):
         """ Get full path to the module's output directory. """
-        return os.path.join(self.output_dir, self.host.address + "-" + self.service.transport + "-" + self.service.port + "-" + filename)
+        if self.TYPE == 'service':
+            return os.path.join(self.output_dir, self.host.address + "-" + self.service.transport + "-" + self.service.port + "-" + filename)
+        elif self.TYPE == 'host':
+            return os.path.join(self.output_dir, self.host.address + "-" + filename)
+
 
     async def can_run(self):
         """ Returns True if the module can run on this service, else False. """
