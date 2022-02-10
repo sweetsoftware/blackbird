@@ -17,17 +17,24 @@ class HttpModule(Module):
         Module.__init__(self, host, service, output_dir)
         self.tls = False
         self.user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:67.0) Gecko/20100101 Firefox/67.0'
-        self.url = ""
 
     def is_tls(self):
         """ Returns ture if the service is TLS encrypted. """
         return self.tls
 
-
     def get_url(self, hostname=None):
         """ Returns full URL to the HTTP service. """
-        return self.url
-
+        url = ""
+        if self.tls:
+            url += "https://"
+        else:
+            url += "http://"
+        if hostname:
+            url += hostname
+        else:
+            url += self.host.address
+        url += ":" + self.service.port
+        return url
 
     async def can_run(self):
         try:
@@ -36,8 +43,6 @@ class HttpModule(Module):
             resp = await asyncio.wait_for(session.get(url, allow_redirects=False), timeout=5)
             await session.close()
             self.tls = True
-            print(url)
-            self.url = url
             return True
         except Exception as exc:
             await session.close()
@@ -47,8 +52,6 @@ class HttpModule(Module):
                 resp = await asyncio.wait_for(session.get(url, allow_redirects=False), timeout=5)
                 await session.close()
                 self.tls = False
-                print(url)
-                self.url = url
                 return True
             except:
                 return False

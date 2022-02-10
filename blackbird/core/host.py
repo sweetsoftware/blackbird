@@ -58,10 +58,11 @@ class Host():
                     )
                 )
 
-    
-    def get_hostnames(self):
-        return list(self.hostnames)
-
+    def get_hostnames(self, include_ip=False):
+        hostname_list = list(self.hostnames)
+        if include_ip:
+            hostname_list.append(self.address)
+        return hostname_list
 
     def add_hostname(self, hostname):
         self.hostnames.add(hostname)
