@@ -35,7 +35,7 @@ class BlackBird():
         if output_dir:
             self.output_dir = output_dir
             if os.path.exists(self.output_dir):
-                raise BlackBirdError("Output dir already exists.")
+                log.warn("Output dir already exists.")
             else:
                 try:
                     os.makedirs(self.output_dir)

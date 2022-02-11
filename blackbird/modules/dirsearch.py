@@ -11,5 +11,5 @@ class ModuleInstance(HttpModule):
     
     async def run(self):
         for hostname in self.host.get_hostnames(include_ip=True):
-            cmd = "dirsearch -b -q --random-agent -u '%s'" % self.get_url(hostname)
-            await utils.run_cmd(cmd, outfile=self.get_output_path('dirsearch-%s.txt' % hostname))
+            cmd = "dirsearch -b -q -u '%s' -o '%s'" % (self.get_url(hostname), self.get_output_path('dirsearch-%s.txt' % hostname))
+            await utils.run_cmd(cmd)

@@ -33,12 +33,13 @@ class HttpModule(Module):
             url += hostname
         else:
             url += self.host.address
-        url += ":" + self.service.port
+        if self.tls and self.service.port != 443 or (not self.tls) and self.service.port != 80:
+            url += ":" + str(self.service.port)
         return url
 
     async def can_run(self):
         try:
-            url = "https://" + self.host.address + ":" + self.service.port
+            url = "https://" + self.host.address + ":" + str(self.service.port)
             session = aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False))
             resp = await asyncio.wait_for(session.get(url, allow_redirects=False), timeout=5)
             await session.close()
@@ -47,7 +48,7 @@ class HttpModule(Module):
         except Exception as exc:
             await session.close()
             try:
-                url = "http://" + self.host.address + ":" + self.service.port
+                url = "http://" + self.host.address + ":" + str(self.service.port)
                 session = aiohttp.ClientSession()
                 resp = await asyncio.wait_for(session.get(url, allow_redirects=False), timeout=5)
                 await session.close()

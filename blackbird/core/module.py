@@ -34,7 +34,7 @@ class Module:
     def get_output_path(self, filename):
         """ Get full path to the module's output directory. """
         if self.TYPE == 'service':
-            return os.path.join(self.output_dir, self.host.address + "-" + self.service.transport + "-" + self.service.port + "-" + filename)
+            return os.path.join(self.output_dir, self.host.address + "-" + self.service.transport + "-" + str(self.service.port) + "-" + filename)
         elif self.TYPE == 'host':
             return os.path.join(self.output_dir, self.host.address + "-" + filename)
 

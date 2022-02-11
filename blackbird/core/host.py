@@ -5,7 +5,7 @@ class Service():
     def __init__(self, host, port, service, protocol, 
         tunnel, product, version, extrainfo, servicefp):
         self.host = host
-        self.port = port
+        self.port = int(port)
         self.protocol = service
         self.transport = protocol
         self.tunnel = tunnel
