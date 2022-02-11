@@ -17,7 +17,7 @@ from blackbird.core import log
 from blackbird.core.exceptions import BlackBirdError
 
 
-async def run_cmd(cmdline, timeout=config.CMD_TIMEOUT, print_output=True, wdir=None, outfile=None):
+async def run_cmd(cmdline, timeout=config.CMD_TIMEOUT, print_output=False, wdir=None, outfile=None):
     """ Run a command asynchronously and return output.
     Enforce a timeout and max conccurent processes run by the program.
     """
@@ -47,8 +47,6 @@ async def run_cmd(cmdline, timeout=config.CMD_TIMEOUT, print_output=True, wdir=N
                 log.info("Output for : {}".format(cmdline))
                 log.log(output)
             config.RUNNING_PROCS.remove(cmdline)
-            if config.RUNNING_PROCS:
-                log.info("%s tasks running ..." % len(config.RUNNING_PROCS))
             if outfile:    
                 with open(outfile, 'w') as out:
                     out.write(output)

@@ -140,6 +140,7 @@ class BlackBird():
                     for service in host.services:
                         module_instance = module_obj.ModuleInstance(host, service, module_output_dir)
                         tasks.append(module_instance)
+        log.info("Now running {} modules ...".format(len(tasks)))
         await asyncio.gather(*(instance._run() for instance in tasks))
 
 
