@@ -166,7 +166,7 @@ class BlackBird():
         matching_services = set()
         for host in self.hosts.values():
             for service in host.services:
-                if service.search(search_string):
+                if search_string == '*' or service.search(search_string):
                     matching_services.add(service)
         return matching_services
 

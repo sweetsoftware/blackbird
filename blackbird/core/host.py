@@ -16,12 +16,18 @@ class Service():
 
 
     def search(self, search_string):
-        searchable = [self.host.address, self.protocol, self.version, self.product, self.extrainfo, self.servicefp]
+        searchable = [self.protocol, self.version, self.product, self.extrainfo]
+        # Full text search in service info
         for field in searchable:
             if search_string in field:
                 return True
-        if search_string == self.port:
+        # Exact port match
+        if search_string == str(self.port):
             return True
+        # Exact address match
+        if search_string == self.host.address:
+            return True
+        # Search hostnames
         for hostname in self.host.get_hostnames():
             if search_string in hostname:
                 return True
@@ -29,7 +35,7 @@ class Service():
 
 
     def __str__(self):
-        return self.host.address + ":" + self.port + " " + self.transport
+        return "{} {} {} {}".format(self.transport, '{}:{}'.format(self.host.address, self.port), self.protocol, self.host.hostnames)
 
 
 class Host():
