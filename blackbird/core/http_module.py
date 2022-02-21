@@ -40,19 +40,17 @@ class HttpModule(Module):
     async def can_run(self):
         try:
             url = "https://" + self.host.address + ":" + str(self.service.port)
-            session = aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False))
-            resp = await asyncio.wait_for(session.get(url, allow_redirects=False), timeout=5)
-            await session.close()
-            self.tls = True
-            return True
+            async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False)) as session:
+                resp = await asyncio.wait_for(session.get(url, allow_redirects=False), timeout=5)
+                self.tls = True
+                return True
         except Exception as exc:
             await session.close()
             try:
                 url = "http://" + self.host.address + ":" + str(self.service.port)
-                session = aiohttp.ClientSession()
-                resp = await asyncio.wait_for(session.get(url, allow_redirects=False), timeout=5)
-                await session.close()
-                self.tls = False
-                return True
+                async with aiohttp.ClientSession() as session:
+                    resp = await asyncio.wait_for(session.get(url, allow_redirects=False), timeout=5)
+                    self.tls = False
+                    return True
             except:
                 return False
