@@ -3,6 +3,7 @@ import glob
 import asyncio
 import tempfile
 import termcolor
+import subprocess
 
 from blackbird.core import config
 from blackbird.core import utils
@@ -17,7 +18,7 @@ class BlackBird():
     def __init__(self, input_files=None,
         brute_type='default', user_list=None, pass_list=None, userpass_list=None,
         search=None, modules='default', output_dir=None, host_file=None, targets=None,
-        cmd_timeout=60*15, show_logo=True, max_tasks=10, dry_run=False):
+        cmd_timeout=60*15, show_logo=True, max_tasks=10, dry_run=False, single_host=None, quiet=False):
 
         self.INSTALL_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
         if cmd_timeout:
@@ -30,6 +31,7 @@ class BlackBird():
             config.DRY_RUN = True
         self.search_str = search
         self.modules_to_load = modules.split(',')
+        config.QUIET = quiet
 
         # Output directory
         if output_dir:
@@ -44,8 +46,23 @@ class BlackBird():
         else:
             self.output_dir = tempfile.mkdtemp()
         
-        # Import nmap files
         self.hosts = dict()
+        if single_host:
+            host = None
+            port = None
+            if ':' in single_host:
+                host, port = single_host.split(":")
+            else:
+                host = single_host
+            output_nmap_file = os.path.join(self.output_dir, "nmap-scan.xml")
+            if port:
+                nmap_cmd = "nmap -p {} -sV -T4 -Pn -n -oX {} {}".format(port, output_nmap_file, host)
+            else:
+                nmap_cmd = "nmap -Pn -n -sn {} -oX {}".format(host, output_nmap_file)
+            subprocess.run(nmap_cmd, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,)
+            input_files = output_nmap_file
+
+        # Import nmap files
         if input_files:    
             nmap_xml_files = []
             for path in input_files.split(','):

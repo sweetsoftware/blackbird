@@ -17,7 +17,7 @@ from blackbird.core import log
 from blackbird.core.exceptions import BlackBirdError
 
 
-async def run_cmd(cmdline, timeout=config.CMD_TIMEOUT, print_output=False, wdir=None, outfile=None):
+async def run_cmd(cmdline, timeout=config.CMD_TIMEOUT, print_output=True, wdir=None, outfile=None):
     """ Run a command asynchronously and return output.
     Enforce a timeout and max conccurent processes run by the program.
     """
@@ -25,7 +25,6 @@ async def run_cmd(cmdline, timeout=config.CMD_TIMEOUT, print_output=False, wdir=
         # Too many tasks running, sleeping for some time
         await asyncio.sleep(1)
     config.RUNNING_PROCS.append(cmdline)
-    log.info("Running : {}".format(cmdline))
     try:
         if not config.DRY_RUN:
             proc = await asyncio.create_subprocess_shell(
