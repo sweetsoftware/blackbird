@@ -14,7 +14,7 @@ async def main():
     parser.add_argument('-i', '--input-files', help='Input nmap XML files (comma separated)')
     parser.add_argument('-s', '--single-target', help='Single target mode (target.com:2222 or target.com)')
     parser.add_argument('-o', '--output-dir', help='Store results there (default: create tempdir)')
-    parser.add_argument('-M', '--modules', default="default", help='Comma-separated list of modules ( or module tags) to run')
+    parser.add_argument('-m', '--modules', default="default", help='Comma-separated list of modules ( or module tags) to run')
     parser.add_argument('--search', help='Seach hosts by keyword, e.g "ldap", "Apache", ...')
     parser.add_argument('-lm', '--list-modules', action='store_true',
                         help='List available modules')

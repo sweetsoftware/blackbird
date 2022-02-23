@@ -135,7 +135,6 @@ class BlackBird():
 
     async def recon_scan(self):
         """ Run modules. """
-        log.info('Initiating reconscan')
         self.modules = self.load_modules(self.modules_to_load)
         tasks = []
         # Iterate through modules
@@ -192,8 +191,6 @@ class BlackBird():
         modules_by_tag = dict()
         module_list = self.get_module_list()
         
-        log.info("Loading modules")
-
         # Build module object dict form module list
         for module_name in module_list:
             module_obj = getattr(globals()['modules'], module_name)
@@ -208,7 +205,6 @@ class BlackBird():
         if "all" in modules_to_load:
             for tag in modules_by_tag:
                 for module_name in modules_by_tag[tag]:
-                    log.info("Loaded module : %s" % module_name)
                     modules[module_name] = modules_by_tag[tag][module_name]
             return modules
         # Load specific modules by name or tag
